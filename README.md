@@ -11,7 +11,7 @@ graph TD;
     A[Incoming Request] --> B[Middleware 1]
     B --> C[Middleware 2]
     D --> E[Endpoint]
-    F --> G[Response Processed by Middleware 2]
+    E --> F[Response Processed by Middleware 2]
     G --> H[Response Processed by Middleware 1]
     H --> I[Outgoing Response]
 ```
