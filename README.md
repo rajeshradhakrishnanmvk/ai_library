@@ -6,6 +6,7 @@ Middleware in .NET Core plays a crucial role in request and response processing 
 
 Middleware components are assembled into an application pipeline to handle requests and responses. Each component chooses whether to pass the request to the next component or process it. This modularity is advantageous because it allows for clean separation of concerns, scalability, and testing flexibility. Here’s a simple conceptual flowchart of how middleware functions:
 
+```mermaid
 graph TD;
     A[Incoming Request] --> B[Middleware 1]
     B --> C[Middleware 2]
@@ -15,7 +16,7 @@ graph TD;
     F --> G[Response Processed by Middleware 2]
     G --> H[Response Processed by Middleware 1]
     H --> I[Outgoing Response]
-
+```
 
 ## Overview of `JsonToHtmlMiddleware`
 
