@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"
+    />
+    <style>
+      tr.htmx-swapping td {
+        opacity: 0;
+        transition: opacity 1s ease-out;
+      }
+      .main-container {
+        display: flex;
+        flex-direction: row;
+        gap: 20px;
+      }
+      .left-column {
+        flex: 1;
+      }
+      .right-column {
+        flex: 2;
+        display: flex;
+        flex-direction: column;
+      }
+      .chat-container {
+        flex: 1;
+        overflow-y: auto;
+        border: 1px solid #ddd;
+        padding: 10px;
+        background-color: #f8f9fa;
+      }
+      .chat-message {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+        width: 100%;
+      }
+      .chat-message img {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+      }
+      .chat-message.user {
+        justify-content: flex-start;
+      }
+      .chat-message.assistant {
+        justify-content: flex-end;
+      }
+      .bubble {
+        position: relative;
+        padding: 10px;
+        border-radius: 10px;
+        color: white;
+        max-width: 60%;
+        word-wrap: break-word;
+      }
+      .bubble::after {
+        content: "";
+        position: absolute;
+        width: 0;
+        height: 0;
+        border-style: solid;
+      }
+      .chat-message.user .bubble {
+        background-color: #007bff;
+        margin-left: 10px;
+      }
+      .chat-message.user .bubble::after {
+        border-width: 10px 10px 10px 0;
+        border-color: transparent #007bff transparent transparent;
+        left: -10px;
+        top: 10px;
+      }
+      .chat-message.assistant .bubble {
+        background-color: #28a745;
+        margin-right: 10px;
+      }
+      .chat-message.assistant .bubble::after {
+        border-width: 10px 0 10px 10px;
+        border-color: transparent transparent transparent #28a745;
+        right: -10px;
+        top: 10px;
+      }
+    </style>
+    <title>AI.Library</title>
+  </head>
+  <body>
+    <header><h3>AI.Library</h3></header>
+    <main>
+      <div class="main-container">
+        <!-- Left Column -->
+        <div class="left-column">
+          <form
+            hx-put="/api/books"
+            hx-ext="bookjson"
+            hx-target="this"
+            hx-swap="outerHTML"
+          >
+            <div class="form-group">
+              <label>Book Name</label>
+              <input id="name" type="text" name="Name" value="Kalam" />
+            </div>
+            <div class="form-group">
+              <label>Author</label>
+              <input id="author" type="text" name="Author" value="M.T Vasudevan Nair" />
+            </div>
+            <div class="form-group">
+              <label>Description</label>
+              <input id="description" type="text" name="Description" value="A story, Once upon a time" />
+            </div>
+            <div class="form-group">
+              <label>Library</label>
+              <input id="library" type="text" name="Library" value="Kalista" />
+            </div>
+            <button class="btn" hx-post="/api/books" hx-target="#books" hx-swap="afterbegin">
+              Insert
+            </button>
+            <button class="btn" hx-get="/api/books" hx-target="#bookresponse" hx-swap="innerHTML">
+              Refresh Books
+            </button>
+          </form>
+          <div id="bookresponse" hx-get="/api/books" hx-trigger="load" hx-swap="beforeend">
+            My Books
+          </div>
+        </div>
+        <!-- Right Column -->
+        <div class="right-column">
+          <div id="chatview" class="chat-container">
+            <div id="chat-message-0" class="chat-message assistant">
+              <div class="bubble">
+                <p>You are a helpful and concise assistant.</p>
+              </div>
+            </div>
+            <div id="chat-message-1" class="chat-message user">
+              <img
+                src="https://gramener.com/comicgen/v1/comic?name=dee&amp;angle=side&amp;emotion=happy&amp;pose=explaining&amp;box=&amp;boxcolor=%23000000&amp;boxgap=&amp;mirror="
+              />
+              <div class="bubble">
+                <p>what is the capital of newzland?</p>
+              </div>
+            </div>
+            <div id="chat-message-2" class="chat-message assistant">
+              <img
+                src="https://gramener.com/comicgen/v1/comic?name=ava&amp;emotion=angry&amp;pose=angry&amp;shirt=%23b1dbf2&amp;box=&amp;boxcolor=%23000000&amp;boxgap=&amp;mirror="
+              />
+              <div class="bubble">
+                <p>
+                  I think you meant to ask about New Zealand! The capital of New
+                  Zealand is Wellington.
+                </p>
+              </div>
+            </div>
+          </div>
+          <form hx-post="/" hx-target="#chatview" hx-swap="beforeend">
+            <fieldset role="group" class="input-group">
+              <input
+                required="1"
+                type="text"
+                name="msg"
+                placeholder="Type a message"
+                hx-swap-oob="true"
+                aria-label="Type your message here"
+                aria-describedby="sendButton"
+                id="msg-input"
+                class="form-control"
+              />
+              <button class="btn">Send</button>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </main>
+    <footer><h3>Rajesh Radhakrishnan</h3></footer>
+    <script
+      src="https://unpkg.com/htmx.org@2.0.2"
+      integrity="sha384-Y7hw+L/jvKeWIRRkqWYfPcvVxHzVzn5REgzbawhxAuQGwX1XWe70vji+VSeHOThJ"
+      crossorigin="anonymous"
+    ></script>
+    <script>
+      htmx.defineExtension('bookjson', {
+        onEvent: function (name, evt) {
+          if (name === "htmx:configRequest") {
+            evt.detail.headers["Content-Type"] = "application/json";
+            evt.detail.headers["X-API-Key"] = "sjk_xxx";
+          }
+        },
+        encodeParameters: function (xhr, parameters, elt) {
+          xhr.overrideMimeType("text/json"); // override default mime type
+          var payload = JSON.stringify(parameters);
+          console.log(payload);
+          return payload;
+        },
+      });
+    </script>
+  </body>
+</html>
