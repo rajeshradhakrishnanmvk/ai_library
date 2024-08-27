@@ -10,9 +10,7 @@ Middleware components are assembled into an application pipeline to handle reque
 graph TD;
     A[Incoming Request] --> B[Middleware 1]
     B --> C[Middleware 2]
-    C --> D[Middleware 3]
     D --> E[Endpoint]
-    E --> F[Response Processed by Middleware 3]
     F --> G[Response Processed by Middleware 2]
     G --> H[Response Processed by Middleware 1]
     H --> I[Outgoing Response]
