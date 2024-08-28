@@ -153,12 +153,12 @@
               </div>
             </div>
           </div>
-          <form hx-post="/" hx-target="#chatview" hx-swap="beforeend">
+          <form hx-post="/api/ai/" hx-ext="bookjson" hx-include="#msg-input" hx-target="#chatview" hx-swap="beforeend">
             <fieldset role="group" class="input-group">
               <input
                 required="1"
                 type="text"
-                name="msg"
+                name="message"
                 placeholder="Type a message"
                 hx-swap-oob="true"
                 aria-label="Type your message here"
