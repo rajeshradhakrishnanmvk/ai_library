@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kanban Board</title>
+    <link rel="stylesheet" type="text/css" href="/css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Kanban Board</h1>
+        <div id="user-story-form">
+            <input type="text" id="user-story-title" placeholder="User Story Title" required>
+            <button onclick="addUserStory()">Add User Story</button>
+        </div>
+        <div class="board">
+            <div class="column" id="backlog">
+                <h2>Backlog</h2>
+                <ul class="story-list" data-status="backlog" ondrop="drop(event)" ondragover="allowDrop(event)"></ul>
+            </div>
+            <div class="column" id="in-progress" >
+                <h2>In Progress</h2>
+                <ul class="story-list" data-status="in-progress" ondrop="drop(event)" ondragover="allowDrop(event)"></ul>
+            </div>
+            <div class="column" id="done">
+                <h2>Done</h2>
+                <ul class="story-list" data-status="done" ondrop="drop(event)" ondragover="allowDrop(event)"></ul>
+            </div>
+        </div>
+    </div>
+    <script src="/js/kanbanService.js"></script>
+    <script src="/js/main.js"></script>
+</body>
+</html>
