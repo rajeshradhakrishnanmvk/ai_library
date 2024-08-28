@@ -1,7 +1,7 @@
 const cacheName = 'kanban-board-v1';
 const cacheAssets = [
     '/kanban.html',
-    '/css/style.css',
+    '/css/styles.css',
     '/js/main.js',
     '/js/kanbanService.js',
     '/js/serviceWorker.js'
