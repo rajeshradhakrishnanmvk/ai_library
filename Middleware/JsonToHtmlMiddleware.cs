@@ -18,7 +18,12 @@ public class JsonToHtmlMiddleware
     {
         // Capture the original response body stream
         var originalBodyStream = context.Response.Body;
-
+        //write code to skip the middleware if the request is to /api/ai
+        if (context.Request.Path.StartsWithSegments("/api/ai"))
+        {
+            await _next(context);
+            return;
+        }
         // Use a memory stream to temporarily store the response
         using (var newBodyStream = new MemoryStream())
         {
