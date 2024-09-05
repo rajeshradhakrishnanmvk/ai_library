@@ -1,5 +1,5 @@
 {
-    "name": "Ollama with Phi-3 for C#",
+    "name": "dev with dotnet C#",
     "image": "mcr.microsoft.com/dotnet/sdk:8.0",
     "features": {
         "ghcr.io/devcontainers/features/docker-in-docker:2": {},
@@ -30,11 +30,11 @@
         32001
     ],
     "postCreateCommand": "",
-    "postStartCommand": "ollama pull phi3",
+    "postStartCommand": "",
     "remoteUser": "vscode",
     "hostRequirements": {
-        "memory": "8gb",
-        "cpus": 4
+        "memory": "4gb",
+        "cpus": 2
     },
     "portsAttributes": {
         "32001": {
