@@ -10,6 +10,4 @@ public class Book
 
     public string? Library { get; set; }
 
-    public Ally? Partner  { get; set; }
-
 }

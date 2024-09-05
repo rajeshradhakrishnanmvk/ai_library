@@ -1,7 +1,16 @@
 # Understanding .NET Core Middleware: A Practical Guide with `JsonToHtmlMiddleware`
 
 Middleware in .NET Core plays a crucial role in request and response processing within the application pipeline. Acting as a conduit through which requests and responses pass, middleware offers developers the flexibility to modify or handle requests at various points in the pipeline. In this blog, we will explore .NET Core middleware through a real-world example of `JsonToHtmlMiddleware`. This middleware transforms JSON responses into HTML for a richer and more interactive developer interface, utilizing HTMX and PicoCSS for frontend enhancement.
+## Project Setup
 
+```
+dotnet build
+dotnet tool install --global dotnet-ef --version 8.*
+dotnet ef migrations add m1 -o Data/Migrations
+dotnet ef database update
+dotnet add package Microsoft.SemanticKernel --version=1.15.0
+dotnet run
+```
 ## Introduction to Middleware in .NET Core
 
 Middleware components are assembled into an application pipeline to handle requests and responses. Each component chooses whether to pass the request to the next component or process it. This modularity is advantageous because it allows for clean separation of concerns, scalability, and testing flexibility. Here’s a simple conceptual flowchart of how middleware functions:
