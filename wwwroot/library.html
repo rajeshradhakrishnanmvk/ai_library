@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI.Library</title>
+    <link href="https://unpkg.com/@picocss/pico@latest/css/pico.min.css" rel="stylesheet">
+    <style>
+        /* Additional custom styling to make it look more like a social media feed */
+        .post-card {
+            margin-bottom: 1rem;
+        }
+        .comments-section {
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+        }
+        .comment {
+            border-top: 1px solid #ccc;
+            padding-top: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+
+    <main class="container">
+        <!-- Create New Post -->
+        <article class="card">
+            <header>
+                <h3>What's on your mind?</h3>
+            </header>
+            <form id="postForm">
+                <textarea id="postContent" placeholder="Share your thoughts..." required></textarea>
+                <button type="submit" class="primary">Post</button>
+            </form>
+        </article>
+
+        <!-- Posts Section -->
+        <section id="postsSection">
+            <!-- Dynamic posts will appear here -->
+        </section>
+    </main>
+
+    <script>
+        document.getElementById('postForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            
+            // Get the content of the post
+            const postContent = document.getElementById('postContent').value;
+            if (!postContent) return;
+
+            // Create a new card for the post
+            const postCard = document.createElement('article');
+            postCard.classList.add('card', 'post-card');
+
+            // Post content
+            postCard.innerHTML = `
+                <header>
+                    <h4>Posted by You</h4>
+                </header>
+                <p>${postContent}</p>
+                <footer>
+                    <form class="comments-section">
+                        <label for="commentInput">Add a comment:</label>
+                        <input type="text" id="commentInput" placeholder="Write a comment..." required>
+                        <button type="submit">Comment</button>
+                        <div class="comments-list"></div>
+                    </form>
+                </footer>
+            `;
+
+            // Append the new post to the posts section
+            document.getElementById('postsSection').appendChild(postCard);
+
+            // Clear the post input
+            document.getElementById('postContent').value = '';
+
+            // Handle the comment form submission
+            const commentForm = postCard.querySelector('form.comments-section');
+            const commentInput = commentForm.querySelector('#commentInput');
+            const commentsList = commentForm.querySelector('.comments-list');
+
+            commentForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const commentText = commentInput.value;
+                if (!commentText) return;
+
+                // Add the comment to the post
+                const comment = document.createElement('div');
+                comment.classList.add('comment');
+                comment.textContent = commentText;
+                commentsList.appendChild(comment);
+
+                // Clear the comment input
+                commentInput.value = '';
+            });
+        });
+    </script>
+</body>
+</html>
