@@ -404,3 +404,4 @@ models
 
 *.db
 Migrations
+*.env
