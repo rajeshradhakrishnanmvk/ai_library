@@ -1,4 +1,5 @@
 using Microsoft.SemanticKernel;
+using Microsoft.SemanticKernel.ChatCompletion;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -65,11 +66,22 @@ app.MapDelete("/api/books/{id:int}", BookService.DeleteBook);
 
 app.MapGet("/api/books/{id:int}/update",BookService.GetBookById);
 
+app.MapGet("/api/chat",  (ChatService chatService) =>
+{
+    var result =  chatService.GetHistory();
+    return result;
+});
+
 app.MapPost("/api/chat", async (BookMessage message, ChatService chatService) =>
 {
     var result = await chatService.AIResponse(message);
     return result;
 });
 
+app.MapPost("/api/exportChat",  (ChatHistory message, ChatService chatService) =>
+{
+    var result =  chatService.AddHistory(message);
+    return result;
+});
 
 app.Run();

@@ -45,7 +45,8 @@ public class JsonToHtmlMiddleware
                     }
 
                 }
-                else  if (context.Request.Path.StartsWithSegments("/api/chat"))
+                else  if (context.Request.Path.StartsWithSegments("/api/chat") ||
+                context.Request.Path.StartsWithSegments("/api/exportChat"))
                 {
                     htmlResponse = ConvertChatToHtml(jsonResponse);
                     // await _next(context);
@@ -80,15 +81,12 @@ public class JsonToHtmlMiddleware
             var messageId = $"chat-message-{arrayItems.IndexOf(item)}";
             var author = item.GetProperty("role").GetProperty("label").GetString();
             var content = item.GetProperty("items")[0].GetProperty("text").GetString();
-            var imgSrc = author == "User" 
+            var imgSrc = author == "user" 
                 ? "https://gramener.com/comicgen/v1/comic?name=dee&angle=side&emotion=happy&pose=explaining&box=&boxcolor=%23000000&boxgap=&mirror=" 
                 : "https://gramener.com/comicgen/v1/comic?name=ava&emotion=angry&pose=angry&shirt=%23b1dbf2&box=&boxcolor=%23000000&boxgap=&mirror=";
 
             htmlBuilder.AppendFormat("<div id='{0}' class='chat-message {1}'>", messageId, author.ToLower());
-            if (author != "User")
-            {
-                htmlBuilder.AppendFormat("<img src='{0}' />", imgSrc);
-            }
+            htmlBuilder.AppendFormat("<img src='{0}' />", imgSrc);
             htmlBuilder.Append("<div class='bubble'>");
             htmlBuilder.AppendFormat("<p>{0}</p>", content);
             htmlBuilder.Append("</div>");

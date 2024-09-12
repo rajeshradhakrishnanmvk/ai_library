@@ -26,6 +26,7 @@
       }
       .chat-container {
         flex: 1;
+        max-height: 900px;
         overflow-y: auto;
         border: 1px solid #ddd;
         padding: 10px;
@@ -120,6 +121,12 @@
             <button class="btn" hx-get="/api/books" hx-target="#bookresponse" hx-swap="innerHTML">
               Refresh Books
             </button>
+            <button class="btn"  onclick="importChat()">
+              Import Chat
+            </button>
+            <button class="btn" onclick="exportChat()">
+              Export Chat
+            </button>
           </form>
           <div id="bookresponse" hx-get="/api/books" hx-trigger="load" hx-swap="beforeend">
             My Books
@@ -127,10 +134,10 @@
         </div>
         <!-- Right Column -->
         <div class="right-column">
-          <div id="chatview" class="chat-container">
-            
+          <div hx-get="/api/chat/" id="chatview" class="chat-container" hx-target="#chatview" hx-trigger="load">
+
           </div>
-          <form hx-post="/api/chat/" hx-ext="bookjson" hx-include="#msg-input" hx-target="#chatview" hx-swap="beforeend">
+          <form hx-post="/api/chat/" hx-ext="bookjson" hx-include="#msg-input" hx-target="#chatview" hx-swap="innerHTML">
             <fieldset role="group" class="input-group">
               <input
                 required="1"
@@ -170,6 +177,36 @@
           return payload;
         },
       });
+      function importChat() {
+                const chatView = document.getElementById('chatview');
+                const messages = Array.from(chatView.children).map(message => ({
+                role: { label: message.classList.contains('user') ? 'user' : 'assistant' },
+                items: [{
+                  $type: 'TextContent',
+                  text: message.querySelector('.bubble').innerText
+                }]
+                }));
+                localStorage.setItem('chatMessages', JSON.stringify(messages));
+                alert('Chat imported to local storage.');
+            }
+
+            function exportChat() {
+              const chatMessages = localStorage.getItem('chatMessages');
+              if (chatMessages) {
+                fetch('/api/exportChat', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json'
+                  },
+                  body: chatMessages
+                })
+                .then(response => response.json())
+                .then(data => alert('Chat exported successfully.'))
+                .catch(error => console.error('Error exporting chat:', error));
+              } else {
+                alert('No chat messages found in local storage.');
+              }
+            }
     </script>
   </body>
 </html>
