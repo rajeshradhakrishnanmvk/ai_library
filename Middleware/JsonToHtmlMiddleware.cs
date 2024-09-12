@@ -18,12 +18,7 @@ public class JsonToHtmlMiddleware
     {
         // Capture the original response body stream
         var originalBodyStream = context.Response.Body;
-        //write code to skip the middleware if the request is to /api/ai
-        if (context.Request.Path.StartsWithSegments("/api/ai"))
-        {
-            await _next(context);
-            return;
-        }
+
         // Use a memory stream to temporarily store the response
         using (var newBodyStream = new MemoryStream())
         {
@@ -50,6 +45,12 @@ public class JsonToHtmlMiddleware
                     }
 
                 }
+                else  if (context.Request.Path.StartsWithSegments("/api/chat"))
+                {
+                    htmlResponse = ConvertChatToHtml(jsonResponse);
+                    // await _next(context);
+                    // return;
+                }
                 else{
                     // Convert the JSON to HTML
                     htmlResponse = ConvertJsonToHtml(jsonResponse);
@@ -67,7 +68,35 @@ public class JsonToHtmlMiddleware
             }
         }
     }
+    private string ConvertChatToHtml(string jsonResponse)
+    {
+        var jsonDocument = JsonDocument.Parse(jsonResponse);
+        var htmlBuilder = new System.Text.StringBuilder();
 
+        var arrayItems = jsonDocument.RootElement.EnumerateArray().ToList();
+
+        foreach (var item in arrayItems)
+        {
+            var messageId = $"chat-message-{arrayItems.IndexOf(item)}";
+            var author = item.GetProperty("role").GetProperty("label").GetString();
+            var content = item.GetProperty("items")[0].GetProperty("text").GetString();
+            var imgSrc = author == "User" 
+                ? "https://gramener.com/comicgen/v1/comic?name=dee&angle=side&emotion=happy&pose=explaining&box=&boxcolor=%23000000&boxgap=&mirror=" 
+                : "https://gramener.com/comicgen/v1/comic?name=ava&emotion=angry&pose=angry&shirt=%23b1dbf2&box=&boxcolor=%23000000&boxgap=&mirror=";
+
+            htmlBuilder.AppendFormat("<div id='{0}' class='chat-message {1}'>", messageId, author.ToLower());
+            if (author != "User")
+            {
+                htmlBuilder.AppendFormat("<img src='{0}' />", imgSrc);
+            }
+            htmlBuilder.Append("<div class='bubble'>");
+            htmlBuilder.AppendFormat("<p>{0}</p>", content);
+            htmlBuilder.Append("</div>");
+            htmlBuilder.Append("</div>");
+        }
+
+        return htmlBuilder.ToString();
+    }
     private string ConvertJsonToHtml(string jsonResponse, string mode)
     {
         var jsonDocument = JsonDocument.Parse(jsonResponse);

@@ -128,37 +128,14 @@
         <!-- Right Column -->
         <div class="right-column">
           <div id="chatview" class="chat-container">
-            <div id="chat-message-0" class="chat-message assistant">
-              <div class="bubble">
-                <p>You are a helpful and concise assistant.</p>
-              </div>
-            </div>
-            <div id="chat-message-1" class="chat-message user">
-              <img
-                src="https://gramener.com/comicgen/v1/comic?name=dee&amp;angle=side&amp;emotion=happy&amp;pose=explaining&amp;box=&amp;boxcolor=%23000000&amp;boxgap=&amp;mirror="
-              />
-              <div class="bubble">
-                <p>what is the capital of newzland?</p>
-              </div>
-            </div>
-            <div id="chat-message-2" class="chat-message assistant">
-              <img
-                src="https://gramener.com/comicgen/v1/comic?name=ava&amp;emotion=angry&amp;pose=angry&amp;shirt=%23b1dbf2&amp;box=&amp;boxcolor=%23000000&amp;boxgap=&amp;mirror="
-              />
-              <div class="bubble">
-                <p>
-                  I think you meant to ask about New Zealand! The capital of New
-                  Zealand is Wellington.
-                </p>
-              </div>
-            </div>
+            
           </div>
-          <form hx-post="/api/ai/" hx-ext="bookjson" hx-include="#msg-input" hx-target="#chatview" hx-swap="beforeend">
+          <form hx-post="/api/chat/" hx-ext="bookjson" hx-include="#msg-input" hx-target="#chatview" hx-swap="beforeend">
             <fieldset role="group" class="input-group">
               <input
                 required="1"
                 type="text"
-                name="message"
+                name="content"
                 placeholder="Type a message"
                 hx-swap-oob="true"
                 aria-label="Type your message here"
