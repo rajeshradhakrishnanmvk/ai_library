@@ -39,7 +39,7 @@ public class BookService
 
         await db.SaveChangesAsync();
 
-        return TypedResults.NoContent();
+        return TypedResults.Ok(Book);
     }
 
     public static async Task<IResult> DeleteBook(int id, LibraryDbContext db)
@@ -48,7 +48,7 @@ public class BookService
         {
             db.Books.Remove(Book);
             await db.SaveChangesAsync();
-            return TypedResults.Ok(Book);
+            return TypedResults.Ok();
         }
 
         return TypedResults.NotFound();
