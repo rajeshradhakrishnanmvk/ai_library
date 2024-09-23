@@ -73,6 +73,10 @@ public class JsonToHtmlMiddleware
     {
         var jsonDocument = JsonDocument.Parse(jsonResponse);
         var htmlBuilder = new System.Text.StringBuilder();
+        //var history = jsonDocument.RootElement.GetProperty("history");
+        // var completionTokens = jsonDocument.RootElement.GetProperty("completionTokens").GetInt32();
+        // var promptTokens = jsonDocument.RootElement.GetProperty("promptTokens").GetInt32();
+        // var totalTokens = jsonDocument.RootElement.GetProperty("totalTokens").GetInt32();
 
         var arrayItems = jsonDocument.RootElement.EnumerateArray().ToList();
 
@@ -89,6 +93,14 @@ public class JsonToHtmlMiddleware
             htmlBuilder.AppendFormat("<img src='{0}' />", imgSrc);
             htmlBuilder.Append("<div class='bubble'>");
             htmlBuilder.AppendFormat("<p>{0}</p>", content);
+            // if (author == "assistant")
+            // {
+            //     htmlBuilder.Append("<div class='completion-tokens'>");
+            //     htmlBuilder.AppendFormat("<p>Completion Tokens: {0}</p>", completionTokens);
+            //     htmlBuilder.AppendFormat("<p>Prompt Tokens: {0}</p>", promptTokens);
+            //     htmlBuilder.AppendFormat("<p>Total Tokens: {0}</p>", totalTokens);
+            //     htmlBuilder.Append("</div>");
+            // }
             htmlBuilder.Append("</div>");
             htmlBuilder.Append("</div>");
         }
@@ -100,8 +112,8 @@ public class JsonToHtmlMiddleware
         var jsonDocument = JsonDocument.Parse(jsonResponse);
         var res = jsonDocument.RootElement.TryGetProperty("value", out var valueElement) ? valueElement : jsonDocument.RootElement;
         var htmlxContent = $@"
-            <tr hx-trigger='cancel' class='editing' hx-get='/api/book/{res.GetProperty("bookId").GetInt32()}'>
-                <td><input name='bookId' value='{res.GetProperty("bookId").GetInt32()}'></td>
+            <tr hx-trigger='cancel' class='editing' hx-get='/api/book/{res.GetProperty("bookId").GetInt32()}' >
+                <td><input name='bookId' value='{res.GetProperty("bookId").GetInt32()}' disabled></td>
                 <td><input name='name' value='{res.GetProperty("name").GetString()}'></td>
                 <td><input name='author' value='{res.GetProperty("author").GetString()}'></td>
                 <td><input name='description' value='{res.GetProperty("description").GetString()}'></td>
@@ -172,11 +184,19 @@ public class JsonToHtmlMiddleware
             {
                 htmlBuilder.AppendFormat("<th>{0}</th>", header.Name);
             }
-            htmlBuilder.Append("<th>Edit</th>");
+            htmlBuilder.Append("<th>Action</th>");
             htmlBuilder.Append("<th>Delete</th>");
             htmlBuilder.Append("</tr></thead>");
             htmlBuilder.Append("<tbody hx-confirm='Are you sure?' hx-target='closest tr' hx-swap='outerHTML swap:1s'>");
             // Add rows
+            htmlBuilder.Append("<tr>");
+            htmlBuilder.Append("<td><input type='text' name='bookId' id='bookId' disabled ></td>");
+            htmlBuilder.Append("<td><input type='text' name='name' id='name' required></td>");
+            htmlBuilder.Append("<td><input type='text' name='author' id='author' required></td>");
+            htmlBuilder.Append("<td><input type='text' name='description' id='description' required></td>");
+            htmlBuilder.Append("<td><input type='text' name='library' id='library' required></td>");
+            htmlBuilder.Append("<td><button type='submit' value='submit' class='btn' hx-post='/api/books' hx-target='#books' hx-ext='bookjson' hx-include='#bookId, #name, #author, #description, #library' hx-swap='beforeend'>Add</button></td>");
+            htmlBuilder.Append("</tr>");
             foreach (var item in arrayItems)
             {
                 htmlBuilder.Append("<tr>");

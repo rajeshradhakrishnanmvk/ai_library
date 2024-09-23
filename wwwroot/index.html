@@ -93,13 +93,14 @@
       <div class="main-container">
         <!-- Left Column -->
         <div class="left-column">
-          <form
-            hx-put="/api/books"
+          <!--<form
+           id="bookform"
+            hx-post="/api/books"
             hx-ext="bookjson"
             hx-target="this"
             hx-swap="outerHTML"
           >
-            <div class="form-group">
+             <div class="form-group">
               <label>Book Name</label>
               <input id="name" type="text" name="Name" value="Kalam" />
             </div>
@@ -117,7 +118,7 @@
             </div>
             <button class="btn" hx-post="/api/books" hx-target="#books" hx-swap="afterbegin">
               Insert
-            </button>
+            </button> 
             <button class="btn" hx-get="/api/books" hx-target="#bookresponse" hx-swap="innerHTML">
               Refresh Books
             </button>
@@ -127,17 +128,21 @@
             <button class="btn" onclick="exportChat()">
               Export Chat
             </button>
-          </form>
-          <div id="bookresponse" hx-get="/api/books" hx-trigger="load" hx-swap="beforeend">
-            My Books
-          </div>
+          </form>-->
+          <div id="bookresponse" hx-get="/api/books" hx-trigger="load" hx-swap="beforeend"></div>
         </div>
         <!-- Right Column -->
         <div class="right-column">
           <div hx-get="/api/chat/" id="chatview" class="chat-container" hx-target="#chatview" hx-trigger="load">
 
           </div>
-          <form hx-post="/api/chat/" hx-ext="bookjson" hx-include="#msg-input" hx-target="#chatview" hx-swap="innerHTML">
+          <form 
+          hx-post="/api/chat/" 
+          hx-ext="bookjson" 
+          hx-include="#msg-input" 
+          hx-target="#chatview" 
+          hx-swap="innerHTML"
+          hx-on::after-request="this.reset()">
             <fieldset role="group" class="input-group">
               <input
                 required="1"
