@@ -129,53 +129,107 @@ public class JsonToHtmlMiddleware
             </tr>"; 
         return htmlxContent;
     }
-   private string ConvertJsonToHtml(string jsonResponse)
+    private string ConvertJsonToHtml(string jsonResponse)
     {
         var jsonDocument = JsonDocument.Parse(jsonResponse);
         var htmlBuilder = new System.Text.StringBuilder();
 
-        Console.WriteLine(jsonDocument.RootElement);
+        // If root element is an object, check for pagedBooks and nextCursor
         if (jsonDocument.RootElement.ValueKind == JsonValueKind.Object)
-        {       //Console.WriteLine(jsonDocument.RootElement);
-                var element = jsonDocument.RootElement.TryGetProperty("value", out var valueElement) ? valueElement : jsonDocument.RootElement;
-                int bookid = element.GetProperty("bookId").GetInt32();
-                htmlBuilder.Append("<tr>");
-                  htmlBuilder.AppendFormat("<td>{0}</td>", bookid);
-                  htmlBuilder.AppendFormat("<td>{0}</td>", element.GetProperty("name").GetString());
-                  htmlBuilder.AppendFormat("<td>{0}</td>", element.GetProperty("author").GetString());
-                  htmlBuilder.AppendFormat("<td>{0}</td>", element.GetProperty("description").GetString());
-                  htmlBuilder.AppendFormat("<td>{0}</td>", element.GetProperty("library").GetString());
-                  htmlBuilder.Append("<td><button class='btn danger'");
-                htmlBuilder.AppendFormat("hx-get='/api/books/{0}/update'", bookid);
-                htmlBuilder.Append("hx-trigger='edit'");
-                htmlBuilder.Append("onClick=\"let editing = document.querySelector('.editing')\n");
-                    htmlBuilder.Append("if(editing) {\n");
-                                    htmlBuilder.Append("Swal.fire({title: 'Already Editing',\n");
-                                    htmlBuilder.Append("showCancelButton: true,\n");
-                                    htmlBuilder.Append("confirmButtonText: 'Yep, Edit This Row!',\n");
-                                    htmlBuilder.Append("text:'Hey!  You are already editing a row!  Do you want to cancel that edit and continue?'})\n");
-                                    htmlBuilder.Append(".then((result) => {\n");
-                                    htmlBuilder.Append("if(result.isConfirmed) {\n");
-                                    htmlBuilder.Append("htmx.trigger(editing, 'cancel')\n");
-                                    htmlBuilder.Append("htmx.trigger(this, 'edit')\n");
-                                    htmlBuilder.Append("}\n");
-                                    htmlBuilder.Append("}\n)");
-                                    htmlBuilder.Append("} else {\n");
-                                    htmlBuilder.Append("htmx.trigger(this, 'edit')\n");
-                                    htmlBuilder.Append("}\">");
-                htmlBuilder.Append("Edit");
-                htmlBuilder.Append("</button>");
-                htmlBuilder.Append("</td>");
-                htmlBuilder.AppendFormat("<td><button class='btn danger' hx-delete='/api/books/{0}'>Delete</button></td>", bookid);
-                htmlBuilder.Append("</tr>");
-           
-        }
-        else if (jsonDocument.RootElement.ValueKind == JsonValueKind.Array)
         {
+            // Check if 'pagedBooks' exists and is an array
+            if (jsonDocument.RootElement.TryGetProperty("pagedBooks", out JsonElement pagedBooksElement) &&
+                pagedBooksElement.ValueKind == JsonValueKind.Array)
+            {
+                var pagedBooks = pagedBooksElement;
+                var nextCursor = jsonDocument.RootElement.GetProperty("nextCursor").GetInt32();
+
+                // Process the array of books
+
+                if (pagedBooks.GetArrayLength() > 0)
+                {
+
+
+                    // Add rows for each book in pagedBooks array
+                    foreach (var item in pagedBooks.EnumerateArray())
+                    {
+                        htmlBuilder.Append("<tr>");
+                        foreach (var value in item.EnumerateObject())
+                        {
+                            htmlBuilder.AppendFormat("<td>{0}</td>", value.Value);
+                        }
+
+                        int bookId = item.GetProperty("bookId").GetInt32();
+                        htmlBuilder.Append("<td><button class='btn danger'");
+                        htmlBuilder.AppendFormat(" hx-get='/api/books/{0}/update'", bookId);
+                        htmlBuilder.Append(" hx-trigger='edit'");
+                        htmlBuilder.Append(" onClick=\"let editing = document.querySelector('.editing');\n");
+                        htmlBuilder.Append("if(editing) {\n");
+                        htmlBuilder.Append("Swal.fire({title: 'Already Editing',\n");
+                        htmlBuilder.Append("showCancelButton: true,\n");
+                        htmlBuilder.Append("confirmButtonText: 'Yep, Edit This Row!',\n");
+                        htmlBuilder.Append("text:'Hey! You are already editing a row! Do you want to cancel that edit and continue?'})\n");
+                        htmlBuilder.Append(".then((result) => {\n");
+                        htmlBuilder.Append("if(result.isConfirmed) {\n");
+                        htmlBuilder.Append("htmx.trigger(editing, 'cancel');\n");
+                        htmlBuilder.Append("htmx.trigger(this, 'edit');\n");
+                        htmlBuilder.Append("}\n");
+                        htmlBuilder.Append("});\n");
+                        htmlBuilder.Append("} else {\n");
+                        htmlBuilder.Append("htmx.trigger(this, 'edit');\n");
+                        htmlBuilder.Append("}\">Edit</button></td>");
+                        htmlBuilder.AppendFormat("<td><button class='btn danger' hx-delete='/api/books/{0}'>Delete</button></td>", bookId);
+                        htmlBuilder.Append("</tr>");
+                    }
+
+                    // Add "Load More" button if nextCursor exists
+                        htmlBuilder.Append("<tr id='replaceMe'>");
+                        htmlBuilder.Append("<td colspan='6'>");
+                        htmlBuilder.AppendFormat("<button class='btn primary' hx-get='/api/books/{0}' hx-target='#replaceMe' hx-swap='outerHTML'>Load More Books...</button>", nextCursor);
+                        htmlBuilder.Append("</td>");
+                        htmlBuilder.Append("</tr>");
+
+
+                }
+            }
+            else
+            {
+                // Single book case (Object without pagedBooks array)
+                var book = jsonDocument.RootElement;
+                foreach (var value in book.EnumerateObject())
+                {
+                    htmlBuilder.AppendFormat("<td>{0}</td>", value.Value);
+                }
+
+                int bookId = book.GetProperty("bookId").GetInt32();
+                htmlBuilder.Append("<td><button class='btn danger'");
+                htmlBuilder.AppendFormat(" hx-get='/api/books/{0}/update'", bookId);
+                htmlBuilder.Append(" hx-trigger='edit'>Edit</button></td>");
+                htmlBuilder.AppendFormat("<td><button class='btn danger' hx-delete='/api/books/{0}'>Delete</button></td>", bookId);
+                htmlBuilder.Append("</tr>");
+
+
+            }
+        }
+
+        return htmlBuilder.ToString();
+    }
+
+   private string ConvertJsonToHtml_old(string jsonResponse)
+    {
+        var jsonDocument = JsonDocument.Parse(jsonResponse);
+        var htmlBuilder = new System.Text.StringBuilder();
+
+         if (jsonDocument.RootElement.ValueKind == JsonValueKind.Array)
+        {
+        // Extract pagedBooks and nextCursor from the response
+        var pagedBooks = jsonDocument.RootElement.GetProperty("pagedBooks");
+        var nextCursor = jsonDocument.RootElement.GetProperty("nextCursor").GetInt32();
+
         var arrayItems = jsonDocument.RootElement.EnumerateArray().ToList();
 
         if (arrayItems.Count > 0 && arrayItems[0].ValueKind == JsonValueKind.Object)
-        {
+        {   //entire table
             htmlBuilder.Append("<table id='books' class=\"table table-striped\">"); // PicoCSS table with striped rows
             htmlBuilder.Append("<thead><tr>");
 
@@ -231,8 +285,49 @@ public class JsonToHtmlMiddleware
                 htmlBuilder.AppendFormat("<td><button class='btn danger' hx-delete='/api/books/{0}'>Delete</button></td>", bookid);
                 htmlBuilder.Append("</tr>");
             }
+            // Add "Load More" button row with nextCursor
+            htmlBuilder.Append("<tr id='replaceMe'>");
+            htmlBuilder.Append("<td colspan='6'>");
+            htmlBuilder.AppendFormat("<button class='btn primary' hx-get='/api/books/{0}' hx-target='#replaceMe' hx-swap='outerHTML'>Load More Books...</button>", nextCursor);
+            htmlBuilder.Append("</td>");
+            htmlBuilder.Append("</tr>");
 
             htmlBuilder.Append("</tbody></table>");
+        }
+        else if (jsonDocument.RootElement.ValueKind == JsonValueKind.Object)
+        {       //a row in the table
+                var element = jsonDocument.RootElement.TryGetProperty("value", out var valueElement) ? valueElement : jsonDocument.RootElement;
+                int bookid = element.GetProperty("bookId").GetInt32();
+                htmlBuilder.Append("<tr>");
+                  htmlBuilder.AppendFormat("<td>{0}</td>", bookid);
+                  htmlBuilder.AppendFormat("<td>{0}</td>", element.GetProperty("name").GetString());
+                  htmlBuilder.AppendFormat("<td>{0}</td>", element.GetProperty("author").GetString());
+                  htmlBuilder.AppendFormat("<td>{0}</td>", element.GetProperty("description").GetString());
+                  htmlBuilder.AppendFormat("<td>{0}</td>", element.GetProperty("library").GetString());
+                  htmlBuilder.Append("<td><button class='btn danger'");
+                htmlBuilder.AppendFormat("hx-get='/api/books/{0}/update'", bookid);
+                htmlBuilder.Append("hx-trigger='edit'");
+                htmlBuilder.Append("onClick=\"let editing = document.querySelector('.editing')\n");
+                    htmlBuilder.Append("if(editing) {\n");
+                                    htmlBuilder.Append("Swal.fire({title: 'Already Editing',\n");
+                                    htmlBuilder.Append("showCancelButton: true,\n");
+                                    htmlBuilder.Append("confirmButtonText: 'Yep, Edit This Row!',\n");
+                                    htmlBuilder.Append("text:'Hey!  You are already editing a row!  Do you want to cancel that edit and continue?'})\n");
+                                    htmlBuilder.Append(".then((result) => {\n");
+                                    htmlBuilder.Append("if(result.isConfirmed) {\n");
+                                    htmlBuilder.Append("htmx.trigger(editing, 'cancel')\n");
+                                    htmlBuilder.Append("htmx.trigger(this, 'edit')\n");
+                                    htmlBuilder.Append("}\n");
+                                    htmlBuilder.Append("}\n)");
+                                    htmlBuilder.Append("} else {\n");
+                                    htmlBuilder.Append("htmx.trigger(this, 'edit')\n");
+                                    htmlBuilder.Append("}\">");
+                htmlBuilder.Append("Edit");
+                htmlBuilder.Append("</button>");
+                htmlBuilder.Append("</td>");
+                htmlBuilder.AppendFormat("<td><button class='btn danger' hx-delete='/api/books/{0}'>Delete</button></td>", bookid);
+                htmlBuilder.Append("</tr>");
+           
         }
         else
         {

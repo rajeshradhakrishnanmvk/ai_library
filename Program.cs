@@ -10,11 +10,12 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddOpenAIChatCompletion(
     modelId: "gpt-3.5-turbo",
     apiKey: "",
-    orgId: ""
+    orgId: "org-2c49kBS4eCTpucaFWB1mMOpD"
 );
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<LibraryDbContext>(option => option.UseSqlite(connectionString));
-
+builder.Services.AddTransient<IBookBulkInserter>(provider =>
+    new BookBulkInserter(provider.GetRequiredService<LibraryDbContext>()));
 // Add Cors
 builder.Services.AddCors(o => o.AddPolicy("Policy", builder => {
   builder.AllowAnyOrigin()
@@ -56,9 +57,20 @@ app.UseMiddleware<JsonToHtmlMiddleware>();
 
 var books = app.MapGroup("/api/books");
 
-app.MapGet("/api/books/", BookService.GetAllBooks);
-app.MapGet("/api/books/library/{library}", BookService.GeBooksByLibrary);
-app.MapGet("/api/books/{id:int}", BookService.GetBookById);
+//app.MapGet("/api/books/", BookService.GetAllBooks);
+//app.MapGet("/api/books/library/{library}", BookService.GeBooksByLibrary);
+//app.MapGet("/api/books/{id:int}", BookService.GetBookById);
+app.MapGet("/api/books/{cursor:int}", async (int cursor, LibraryDbContext db) => 
+{
+    return await BookService.CursorPagination(cursor, db);
+});
+
+
+
+app.MapPost("/api/books/search", async (SearchRequest request, LibraryDbContext db) =>
+{
+   return await BookService.GeBooksByName(request.Search, db);;
+});
 
 app.MapPost("/api/books/", BookService.InsertBook);
 app.MapPut("/api/books/{id:int}", BookService.UpdateBook);
@@ -83,5 +95,35 @@ app.MapPost("/api/exportChat",  (ChatHistory message, ChatService chatService) =
     var result =  chatService.AddHistory(message);
     return result;
 });
+
+app.MapPost("/api/upload", async (HttpRequest request, IBookBulkInserter inserter) =>
+{
+    if (!request.HasFormContentType || !request.Form.Files.Any())
+    {
+        return Results.BadRequest("No file provided.");
+    }
+
+    var file = request.Form.Files[0];
+    var uploadsPath = Path.Combine(Directory.GetCurrentDirectory(), "uploads");
+    
+    if (!Directory.Exists(uploadsPath))
+    {
+        Directory.CreateDirectory(uploadsPath);
+    }
+
+    // Save the file
+    var filePath = Path.Combine(uploadsPath, file.FileName);
+    
+    await using (var stream = new FileStream(filePath, FileMode.Create))
+    {
+        await file.CopyToAsync(stream);
+    }
+
+    // Now bulk insert the books from the uploaded CSV file
+    await inserter.BulkInsertBooksFromCsv(filePath);
+
+    return Results.Ok("File uploaded and books inserted successfully.");
+});
+
 
 app.Run();

@@ -38,11 +38,29 @@ public class ChatService
         var result = await _chatCompletionService.GetChatMessageContentAsync(
             history,
             kernel: _kernel);
+        var completionTokens = 0;
+        var promptTokens = 0;
+        var totalTokens = 0;
+        //get the key value pair from the metadata "Usage" which is of type Azure.AI.OpenAI.CompletionsUsage
+        if (result.Metadata is Dictionary<string, object> metadataDict 
+        && metadataDict.TryGetValue("Usage", out var metadataObj) 
+        && metadataObj is Dictionary<string, object> metadata)
+        {
+            if (metadata.TryGetValue("CompletionsUsage", out var completionsUsageObj) 
+            && completionsUsageObj is Azure.AI.OpenAI.CompletionsUsage completionsUsage)
+            {
+                completionTokens = completionsUsage.CompletionTokens;
+                promptTokens = completionsUsage.PromptTokens;
+                totalTokens = completionsUsage.TotalTokens;
+            }
+        }
+
 
         history.AddAssistantMessage(result.Content);
         session.SetString("ChatHistory", JsonSerializer.Serialize(history));
-
-        return TypedResults.Ok(history);
+        //send completionTokens and promptTokens to the client
+        //return TypedResults.Ok(new { history, completionTokens, promptTokens, totalTokens });
+       return TypedResults.Ok(history);
     }
     
     public IResult AddHistory(ChatHistory history)
