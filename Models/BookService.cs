@@ -50,9 +50,8 @@ public class BookService
             return TypedResults.Ok(new { pagedBooks = allBooks, nextCursor });
         }
         
-        // Return books that match the provided Name
         var pagedBooks = await db.Books
-                                .Where(t => t.Name!.ToLower() == Name.ToLower())
+                                .Where(b => b.Name!.ToLower().StartsWith(Name.ToLower()))
                                 .ToListAsync();
 
         

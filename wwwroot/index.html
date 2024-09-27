@@ -7,6 +7,12 @@
       href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"
     />
     <style>
+      body {
+          font-family: 'Arial', sans-serif;
+          margin: 0;
+          padding: 20px;
+          background-color: #f4f4f9;
+      }
       tr.htmx-swapping td {
         opacity: 0;
         transition: opacity 1s ease-out;
@@ -84,6 +90,49 @@
         right: -10px;
         top: 10px;
       }
+      .table-container {
+          max-width: 900px;
+          margin: 0 auto;
+      }
+
+      .styled-table {
+          width: 100%;
+          border-collapse: collapse;
+      }
+
+      .styled-table th, .styled-table td {
+          padding: 12px;
+          text-align: left;
+      }
+
+      .styled-table tr:nth-child(even) {
+          background-color: #f3f3f3;
+      }
+
+      .styled-table th {
+          background-color: hsla(241, 82%, 64%, 0.829);
+          color: white;
+      }
+
+      .styled-table tbody tr {
+          cursor: pointer;
+          transition: background-color 0.3s ease;
+      }
+
+      .styled-table tbody tr:hover {
+          background-color: #d3d3d3;
+      }
+
+      .selected {
+          background-color: #9cf;
+      }
+
+      .details-container {
+          margin-top: 20px;
+          padding: 15px;
+          border: 1px solid #ddd;
+          background-color: white;
+      }
     </style>
     <title>AI.Library</title>
   </head>
@@ -93,46 +142,59 @@
       <div class="main-container">
         <!-- Left Column -->
         <div class="left-column">
-          <!--<form
-           id="bookform"
-            hx-post="/api/books"
-            hx-ext="bookjson"
-            hx-target="this"
-            hx-swap="outerHTML"
-          >
-             <div class="form-group">
-              <label>Book Name</label>
-              <input id="name" type="text" name="Name" value="Kalam" />
-            </div>
-            <div class="form-group">
-              <label>Author</label>
-              <input id="author" type="text" name="Author" value="M.T Vasudevan Nair" />
-            </div>
-            <div class="form-group">
-              <label>Description</label>
-              <input id="description" type="text" name="Description" value="A story, Once upon a time" />
-            </div>
-            <div class="form-group">
-              <label>Library</label>
-              <input id="library" type="text" name="Library" value="Kalista" />
-            </div>
-            <button class="btn" hx-post="/api/books" hx-target="#books" hx-swap="afterbegin">
-              Insert
-            </button> 
-            <button class="btn" hx-get="/api/books" hx-target="#bookresponse" hx-swap="innerHTML">
-              Refresh Books
-            </button>
-            <button class="btn"  onclick="importChat()">
-              Import Chat
-            </button>
-            <button class="btn" onclick="exportChat()">
-              Export Chat
-            </button>
-          </form>-->
-          <div id="bookresponse" hx-get="/api/books" hx-trigger="load" hx-swap="beforeend"></div>
+          <div id="bookresponse" class="table-container">
+          <!-- <div id="bookresponse" hx-get="/api/books/1" hx-trigger="load" hx-swap="beforeend"> -->
+            <h3> 
+              Search Books 
+              <span class="htmx-indicator"> 
+                <img src="/img/bars.svg"/> Searching... 
+               </span> 
+            </h3>
+            <input class="form-control" type="search"
+                   name="search" placeholder="Begin Typing To Search Users..." 
+                   hx-post="/api/books/search" 
+                   hx-ext="bookjson" 
+                   hx-trigger="input changed delay:500ms, search" 
+                   hx-target="#search-books" 
+                   hx-indicator=".htmx-indicator">
+            <table id='books' hx-get="/api/books/1" hx-trigger="load" class='styled-table' hx-target="#search-books" hx-swap="beforeend">
+              <thead>
+                <tr>
+                  <th>bookId</th>
+                  <th>name</th>
+                  <th>author</th>
+                  <th>description</th>
+                  <th>library</th>
+                  <th>Action</th>
+                  <th>Delete</th>
+                </tr>
+              </thead>
+              <tbody id="search-books" hx-confirm='Are you sure?' hx-target='closest tr' hx-swap='outerHTML swap:1s'>
+                <tr>
+                  <td><input type='text' name='bookId' id='bookId' disabled></td>
+                  <td><input type='text' name='name' id='name' required></td>
+                  <td><input type='text' name='author' id='author' required></td>
+                  <td><input type='text' name='description' id='description' required></td>
+                  <td><input type='text' name='library' id='library' required></td>
+                  <td><button type='submit' class='btn' hx-post='/api/books' hx-target='#books' hx-ext='bookjson' hx-include='#bookId, #name, #author, #description, #library' hx-swap='beforeend'>Add</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <form hx-encoding='multipart/form-data' hx-post='/api/upload'
+                _='on htmx:xhr:progress(loaded, total) set #progress.value to (loaded/total)*100'>
+              <input type='file' name='file'>
+              <button>
+                  Upload
+              </button>
+              <progress id='progress' value='0' max='100'></progress>
+          </form>
         </div>
         <!-- Right Column -->
         <div class="right-column">
+          <div id="details" class="details-container">
+            <!-- Book details will be loaded here via htmx -->
+          </div>
           <div hx-get="/api/chat/" id="chatview" class="chat-container" hx-target="#chatview" hx-trigger="load">
 
           </div>
@@ -181,6 +243,23 @@
           console.log(payload);
           return payload;
         },
+      });
+      document.addEventListener('DOMContentLoaded', function() {
+          const table = document.getElementById('books');
+          const rows = table.getElementsByTagName('tr');
+
+          Array.from(rows).forEach(row => {
+              row.addEventListener('click', function() {
+                  clearSelections();
+                  row.classList.add('selected');
+              });
+          });
+
+          function clearSelections() {
+              Array.from(rows).forEach(row => {
+                  row.classList.remove('selected');
+              });
+          }
       });
       function importChat() {
                 const chatView = document.getElementById('chatview');

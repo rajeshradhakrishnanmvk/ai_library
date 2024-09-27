@@ -1,17 +1,28 @@
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
+using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Logging.Console;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
 
-// Add services to the container.
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+var configuration = builder.Configuration;
+builder.Services.Configure<GroqApiSettings>(configuration.GetSection("GroqApiSettings"));
+builder.Services.Configure<OpenApiSettings>(configuration.GetSection("OpenApiSettings"));
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+var openApiSettings = new OpenApiSettings();
+configuration.GetSection("OpenApiSettings").Bind(openApiSettings);
+
 builder.Services.AddOpenAIChatCompletion(
-    modelId: "gpt-3.5-turbo",
-    apiKey: "",
-    orgId: "org-2c49kBS4eCTpucaFWB1mMOpD"
+    modelId: openApiSettings.ModelId,
+    apiKey: openApiSettings.ApiKey,
+    orgId: openApiSettings.OrgId
 );
+
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<LibraryDbContext>(option => option.UseSqlite(connectionString));
 builder.Services.AddTransient<IBookBulkInserter>(provider =>
@@ -37,6 +48,28 @@ builder.Services.AddSession(options =>
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
 });
+builder.Services.AddHttpClient();
+//builder.Services.AddTransient<GroqApiSettings>();
+builder.Services.AddTransient<GroqApiSettings>((provider) =>
+{
+    var config = provider.GetService<IConfiguration>();
+        return new GroqApiSettings()
+    {
+        ApiKey = config.GetValue<string>("GroqApiSettings:ApiKey"),
+        // Add other settings as needed
+    };
+
+});
+builder.Services.AddTransient<Groqlet>(provider =>
+{
+    var httpClient = provider.GetRequiredService<IHttpClientFactory>().CreateClient();
+    var apiSettings = provider.GetRequiredService<GroqApiSettings>();
+    var logger = provider.GetService<ILogger<Groqlet>>();
+    return new Groqlet(httpClient, apiSettings.ApiKey, logger);
+});
+
+
+builder.Services.AddTransient<IGroqAgentService, GroqAgentService>();
 
 var app = builder.Build();
 
@@ -59,7 +92,7 @@ var books = app.MapGroup("/api/books");
 
 //app.MapGet("/api/books/", BookService.GetAllBooks);
 //app.MapGet("/api/books/library/{library}", BookService.GeBooksByLibrary);
-//app.MapGet("/api/books/{id:int}", BookService.GetBookById);
+app.MapGet("/api/books/selected/{id:int}", BookService.GetBookById);
 app.MapGet("/api/books/{cursor:int}", async (int cursor, LibraryDbContext db) => 
 {
     return await BookService.CursorPagination(cursor, db);
@@ -125,5 +158,11 @@ app.MapPost("/api/upload", async (HttpRequest request, IBookBulkInserter inserte
     return Results.Ok("File uploaded and books inserted successfully.");
 });
 
-
+//create a route for the agent /api/agent/ask
+app.MapPost("/api/agent/ask", async (GroqAgentRequest request) =>
+{
+    var agentService = app.Services.GetRequiredService<IGroqAgentService>() as GroqAgentService;
+    var result = await agentService.AskAgent(request.Query);
+    return result;
+});
 app.Run();

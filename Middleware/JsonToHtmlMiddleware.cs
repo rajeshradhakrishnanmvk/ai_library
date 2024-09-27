@@ -22,10 +22,14 @@ public class JsonToHtmlMiddleware
         // Use a memory stream to temporarily store the response
         using (var newBodyStream = new MemoryStream())
         {
+
+
             context.Response.Body = newBodyStream;
 
             // Continue processing the request
             await _next(context);
+
+
 
             // Check if the response content type is JSON
             if (context.Response.ContentType != null && context.Response.ContentType.Contains("application/json"))
@@ -153,13 +157,15 @@ public class JsonToHtmlMiddleware
                     // Add rows for each book in pagedBooks array
                     foreach (var item in pagedBooks.EnumerateArray())
                     {
-                        htmlBuilder.Append("<tr>");
+
+                        int bookId = item.GetProperty("bookId").GetInt32();
+                        htmlBuilder.AppendFormat("<tr  hx-get='/api/books/selected/{0}' hx-trigger='click' hx-target='#details' hx-swap='innerHTML'>", bookId);
                         foreach (var value in item.EnumerateObject())
                         {
                             htmlBuilder.AppendFormat("<td>{0}</td>", value.Value);
                         }
 
-                        int bookId = item.GetProperty("bookId").GetInt32();
+
                         htmlBuilder.Append("<td><button class='btn danger'");
                         htmlBuilder.AppendFormat(" hx-get='/api/books/{0}/update'", bookId);
                         htmlBuilder.Append(" hx-trigger='edit'");
@@ -191,6 +197,18 @@ public class JsonToHtmlMiddleware
 
 
                 }
+            }
+            else if (jsonDocument.RootElement.TryGetProperty("value", out var bookElement) &&
+                bookElement.ValueKind == JsonValueKind.Object)
+            {
+                
+                htmlBuilder.Append("<div>");
+                htmlBuilder.AppendFormat("<h3>{0}:{1}</h3>", bookElement.GetProperty("bookId").GetInt32(),bookElement.GetProperty("name").GetString());
+                htmlBuilder.AppendFormat("<p>Author: {0}</p>",bookElement.GetProperty("author").GetString());
+                htmlBuilder.AppendFormat("<p>Description: {0}</p>",bookElement.GetProperty("description").GetString());
+                htmlBuilder.AppendFormat("<p>Library: {0}</p>",bookElement.GetProperty("library").GetString());
+                htmlBuilder.Append("</div>");
+
             }
             else
             {
