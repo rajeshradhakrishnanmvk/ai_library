@@ -1,13 +1,11 @@
-using Microsoft.AspNetCore.Http;
-using System.IO;
 using System.Text.Json;
-using System.Threading.Tasks;
+
 
 namespace BooksApi.Middleware;
 public class JsonToHtmlMiddleware
 {
     private readonly RequestDelegate _next;
-
+    private  HttpContext _context;
     public JsonToHtmlMiddleware(RequestDelegate next)
     {
         _next = next;
@@ -16,6 +14,7 @@ public class JsonToHtmlMiddleware
 
     public async Task InvokeAsync(HttpContext context)
     {
+        _context = context;
         // Capture the original response body stream
         var originalBodyStream = context.Response.Body;
 
@@ -59,6 +58,7 @@ public class JsonToHtmlMiddleware
                 else{
                     // Convert the JSON to HTML
                     htmlResponse = ConvertJsonToHtml(jsonResponse);
+                    
                 }
                 // Replace the response content with the HTML
                 context.Response.ContentType = "text/html";
@@ -201,7 +201,18 @@ public class JsonToHtmlMiddleware
             else if (jsonDocument.RootElement.TryGetProperty("value", out var bookElement) &&
                 bookElement.ValueKind == JsonValueKind.Object)
             {
-                
+                // Deserialize the JSON response to get book details
+                var bookDetails = JsonSerializer.Deserialize<Book>(bookElement.GetRawText().Trim());
+
+                if (bookDetails != null)
+                {
+                    // Serialize the book details back to a JSON string
+                    var correctedJson = JsonSerializer.Serialize(bookDetails);
+
+                    // Set the session variable with the corrected JSON string
+                    _context.Session.SetString("SelectedBook", correctedJson);
+                }
+
                 htmlBuilder.Append("<div>");
                 htmlBuilder.AppendFormat("<h3>{0}:{1}</h3>", bookElement.GetProperty("bookId").GetInt32(),bookElement.GetProperty("name").GetString());
                 htmlBuilder.AppendFormat("<p>Author: {0}</p>",bookElement.GetProperty("author").GetString());
@@ -229,139 +240,6 @@ public class JsonToHtmlMiddleware
 
             }
         }
-
-        return htmlBuilder.ToString();
-    }
-
-   private string ConvertJsonToHtml_old(string jsonResponse)
-    {
-        var jsonDocument = JsonDocument.Parse(jsonResponse);
-        var htmlBuilder = new System.Text.StringBuilder();
-
-         if (jsonDocument.RootElement.ValueKind == JsonValueKind.Array)
-        {
-        // Extract pagedBooks and nextCursor from the response
-        var pagedBooks = jsonDocument.RootElement.GetProperty("pagedBooks");
-        var nextCursor = jsonDocument.RootElement.GetProperty("nextCursor").GetInt32();
-
-        var arrayItems = jsonDocument.RootElement.EnumerateArray().ToList();
-
-        if (arrayItems.Count > 0 && arrayItems[0].ValueKind == JsonValueKind.Object)
-        {   //entire table
-            htmlBuilder.Append("<table id='books' class=\"table table-striped\">"); // PicoCSS table with striped rows
-            htmlBuilder.Append("<thead><tr>");
-
-            // Get headers from the first object's keys
-            foreach (var header in arrayItems[0].EnumerateObject())
-            {
-                htmlBuilder.AppendFormat("<th>{0}</th>", header.Name);
-            }
-            htmlBuilder.Append("<th>Action</th>");
-            htmlBuilder.Append("<th>Delete</th>");
-            htmlBuilder.Append("</tr></thead>");
-            htmlBuilder.Append("<tbody hx-confirm='Are you sure?' hx-target='closest tr' hx-swap='outerHTML swap:1s'>");
-            // Add rows
-            htmlBuilder.Append("<tr>");
-            htmlBuilder.Append("<td><input type='text' name='bookId' id='bookId' disabled ></td>");
-            htmlBuilder.Append("<td><input type='text' name='name' id='name' required></td>");
-            htmlBuilder.Append("<td><input type='text' name='author' id='author' required></td>");
-            htmlBuilder.Append("<td><input type='text' name='description' id='description' required></td>");
-            htmlBuilder.Append("<td><input type='text' name='library' id='library' required></td>");
-            htmlBuilder.Append("<td><button type='submit' value='submit' class='btn' hx-post='/api/books' hx-target='#books' hx-ext='bookjson' hx-include='#bookId, #name, #author, #description, #library' hx-swap='beforeend'>Add</button></td>");
-            htmlBuilder.Append("</tr>");
-            foreach (var item in arrayItems)
-            {
-                htmlBuilder.Append("<tr>");
-
-                foreach (var value in item.EnumerateObject())
-                {
-                    htmlBuilder.AppendFormat("<td>{0}</td>", value.Value);
-
-                }
-                int bookid = item.GetProperty("bookId").GetInt32();
-                htmlBuilder.Append("<td><button class='btn danger'");
-                htmlBuilder.AppendFormat("hx-get='/api/books/{0}/update'", bookid);
-                htmlBuilder.Append("hx-trigger='edit'");
-                htmlBuilder.Append("onClick=\"let editing = document.querySelector('.editing')\n");
-                    htmlBuilder.Append("if(editing) {\n");
-                                    htmlBuilder.Append("Swal.fire({title: 'Already Editing',\n");
-                                    htmlBuilder.Append("showCancelButton: true,\n");
-                                    htmlBuilder.Append("confirmButtonText: 'Yep, Edit This Row!',\n");
-                                    htmlBuilder.Append("text:'Hey!  You are already editing a row!  Do you want to cancel that edit and continue?'})\n");
-                                    htmlBuilder.Append(".then((result) => {\n");
-                                    htmlBuilder.Append("if(result.isConfirmed) {\n");
-                                    htmlBuilder.Append("htmx.trigger(editing, 'cancel')\n");
-                                    htmlBuilder.Append("htmx.trigger(this, 'edit')\n");
-                                    htmlBuilder.Append("}\n");
-                                    htmlBuilder.Append("}\n)");
-                                    htmlBuilder.Append("} else {\n");
-                                    htmlBuilder.Append("htmx.trigger(this, 'edit')\n");
-                                    htmlBuilder.Append("}\">");
-                htmlBuilder.Append("Edit");
-                htmlBuilder.Append("</button>");
-                htmlBuilder.Append("</td>");
-                htmlBuilder.AppendFormat("<td><button class='btn danger' hx-delete='/api/books/{0}'>Delete</button></td>", bookid);
-                htmlBuilder.Append("</tr>");
-            }
-            // Add "Load More" button row with nextCursor
-            htmlBuilder.Append("<tr id='replaceMe'>");
-            htmlBuilder.Append("<td colspan='6'>");
-            htmlBuilder.AppendFormat("<button class='btn primary' hx-get='/api/books/{0}' hx-target='#replaceMe' hx-swap='outerHTML'>Load More Books...</button>", nextCursor);
-            htmlBuilder.Append("</td>");
-            htmlBuilder.Append("</tr>");
-
-            htmlBuilder.Append("</tbody></table>");
-        }
-        else if (jsonDocument.RootElement.ValueKind == JsonValueKind.Object)
-        {       //a row in the table
-                var element = jsonDocument.RootElement.TryGetProperty("value", out var valueElement) ? valueElement : jsonDocument.RootElement;
-                int bookid = element.GetProperty("bookId").GetInt32();
-                htmlBuilder.Append("<tr>");
-                  htmlBuilder.AppendFormat("<td>{0}</td>", bookid);
-                  htmlBuilder.AppendFormat("<td>{0}</td>", element.GetProperty("name").GetString());
-                  htmlBuilder.AppendFormat("<td>{0}</td>", element.GetProperty("author").GetString());
-                  htmlBuilder.AppendFormat("<td>{0}</td>", element.GetProperty("description").GetString());
-                  htmlBuilder.AppendFormat("<td>{0}</td>", element.GetProperty("library").GetString());
-                  htmlBuilder.Append("<td><button class='btn danger'");
-                htmlBuilder.AppendFormat("hx-get='/api/books/{0}/update'", bookid);
-                htmlBuilder.Append("hx-trigger='edit'");
-                htmlBuilder.Append("onClick=\"let editing = document.querySelector('.editing')\n");
-                    htmlBuilder.Append("if(editing) {\n");
-                                    htmlBuilder.Append("Swal.fire({title: 'Already Editing',\n");
-                                    htmlBuilder.Append("showCancelButton: true,\n");
-                                    htmlBuilder.Append("confirmButtonText: 'Yep, Edit This Row!',\n");
-                                    htmlBuilder.Append("text:'Hey!  You are already editing a row!  Do you want to cancel that edit and continue?'})\n");
-                                    htmlBuilder.Append(".then((result) => {\n");
-                                    htmlBuilder.Append("if(result.isConfirmed) {\n");
-                                    htmlBuilder.Append("htmx.trigger(editing, 'cancel')\n");
-                                    htmlBuilder.Append("htmx.trigger(this, 'edit')\n");
-                                    htmlBuilder.Append("}\n");
-                                    htmlBuilder.Append("}\n)");
-                                    htmlBuilder.Append("} else {\n");
-                                    htmlBuilder.Append("htmx.trigger(this, 'edit')\n");
-                                    htmlBuilder.Append("}\">");
-                htmlBuilder.Append("Edit");
-                htmlBuilder.Append("</button>");
-                htmlBuilder.Append("</td>");
-                htmlBuilder.AppendFormat("<td><button class='btn danger' hx-delete='/api/books/{0}'>Delete</button></td>", bookid);
-                htmlBuilder.Append("</tr>");
-           
-        }
-        else
-        {
-            htmlBuilder.Append("<ul>");
-
-            foreach (var item in arrayItems)
-            {
-                htmlBuilder.Append("<li>");
-                htmlBuilder.Append(item.ToString());
-                htmlBuilder.Append("</li>");
-            }
-
-            htmlBuilder.Append("</ul>");
-        }
-    }
-
 
         return htmlBuilder.ToString();
     }

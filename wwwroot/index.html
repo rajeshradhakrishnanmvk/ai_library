@@ -192,10 +192,10 @@
         </div>
         <!-- Right Column -->
         <div class="right-column">
-          <div id="details" class="details-container">
+          <div id="details" class="details-container" hx-get="/api/chat/"  hx-target="#chatview" hx-trigger="htmx:afterSettle from:#details">
             <!-- Book details will be loaded here via htmx -->
           </div>
-          <div hx-get="/api/chat/" id="chatview" class="chat-container" hx-target="#chatview" hx-trigger="load">
+          <div  id="chatview" class="chat-container">
 
           </div>
           <form 

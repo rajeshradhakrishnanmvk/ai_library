@@ -23,7 +23,9 @@ public class ChatService
     {
         var session = _httpContextAccessor.HttpContext.Session;
         var historyJson = session.GetString("ChatHistory");
-        var history = string.IsNullOrEmpty(historyJson) ? new ChatHistory("You are a helpful assistant and you know about the author Stephen King, he is the king of horror") : JsonSerializer.Deserialize<ChatHistory>(historyJson);
+        var selectedBook = session.GetString("SelectedBook");
+        var selBook = JsonSerializer.Deserialize<Book>(selectedBook);
+        var history = string.IsNullOrEmpty(historyJson) ? new ChatHistory($"You are a helpful assistant and you know about the author {selBook?.Author ?? "Stephen King"}, about the book {selBook?.Name ?? "Bag of Bones"} which was published during {selBook?.Description ?? "1998 "}") : JsonSerializer.Deserialize<ChatHistory>(historyJson);
 
         return TypedResults.Ok(history);
     }
@@ -31,7 +33,9 @@ public class ChatService
     {
         var session = _httpContextAccessor.HttpContext.Session;
         var historyJson = session.GetString("ChatHistory");
-        var history = string.IsNullOrEmpty(historyJson) ? new ChatHistory("You are a helpful assistant and you know about the author Stephen King, he is the king of horror") : JsonSerializer.Deserialize<ChatHistory>(historyJson);
+        var selectedBook = session.GetString("SelectedBook");
+        var selBook = JsonSerializer.Deserialize<Book>(selectedBook);
+        var history = string.IsNullOrEmpty(historyJson) ? new ChatHistory($"You are a helpful assistant and you know about the author {selBook?.Author ?? "Stephen King"}, about the book {selBook?.Name ?? "Bag of Bones"} which was published during {selBook?.Description ?? "1998 "}") : JsonSerializer.Deserialize<ChatHistory>(historyJson);
 
         history.AddUserMessage(message.Content);
 
