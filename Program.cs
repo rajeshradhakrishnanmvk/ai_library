@@ -129,6 +129,15 @@ app.MapPost("/api/exportChat",  (ChatHistory message, ChatService chatService) =
     return result;
 });
 
+app.MapPost("/api/downloadpdf", (ChatHistory message, ChatService chatService) =>
+{
+    // Call the service to generate the PDF
+    var pdfFile = chatService.DownloadPdf(message);
+
+    // Return the PDF file to the client
+    return Results.File(pdfFile, "application/pdf", "ChatHistory.pdf");
+});
+
 app.MapPost("/api/upload", async (HttpRequest request, IBookBulkInserter inserter) =>
 {
     if (!request.HasFormContentType || !request.Form.Files.Any())

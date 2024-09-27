@@ -2,6 +2,11 @@
 using System.Text.Json;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
+using PdfSharpCore.Pdf;
+using PdfSharpCore.Drawing;
+using PdfSharpCore.Drawing.Layout;
+using System.Text;
+
 
 #pragma warning disable  SKEXP0001
 
@@ -71,17 +76,82 @@ public class ChatService
     {
         var session = _httpContextAccessor.HttpContext.Session;
         var historyJson = session.GetString("ChatHistory");
+
         if (string.IsNullOrEmpty(historyJson))
         {
+            // Add the new chat history if there isn't one
             session.SetString("ChatHistory", JsonSerializer.Serialize(history));
         }
         else
         {
-            var existingHistory = JsonSerializer.Deserialize<ChatHistory>(historyJson);
-            // Optionally, you can merge the existing history with the new history here
+            // Merge or update the chat history (optional: merge logic here)
             session.SetString("ChatHistory", JsonSerializer.Serialize(history));
         }
-        return TypedResults.Ok(history);
+
+        // Return the history as JSON
+        return Results.Json(history); // Proper JSON response
+    }
+
+    public byte[] DownloadPdf(ChatHistory history)
+    {
+        using (var memoryStream = new MemoryStream())
+        {
+            // Create a new PDF document
+            PdfDocument pdf = new PdfDocument();
+            pdf.Info.Title = "Chat History PDF";
+
+            // Create an empty page
+            PdfPage page = pdf.AddPage();
+            XGraphics gfx = XGraphics.FromPdfPage(page);
+
+            // Set up the fonts
+            XFont roleFont = new XFont("Verdana", 12, XFontStyle.Bold);
+            XFont messageFont = new XFont("Verdana", 10, XFontStyle.Regular);
+
+            // Variables to track the position on the page
+            double yPos = 20;
+            const double lineHeight = 20;
+
+            // Iterate through the chat history and add to the document
+            foreach (var chat in history)
+            {
+                // Add the role (e.g., assistant/user)
+                string roleLabel = chat.Role.Label;
+                gfx.DrawString($"{roleLabel}:", roleFont, XBrushes.Black, new XRect(10, yPos, page.Width, page.Height), XStringFormats.TopLeft);
+                yPos += lineHeight;
+
+                // Add the message text
+                foreach (var item in chat.Items)
+                {
+                    // Initialize text formatter for word wrapping
+                    XTextFormatter tf = new XTextFormatter(gfx);
+
+                    // Define the rectangle for text to wrap within
+                    XRect textRect = new XRect(10, yPos, page.Width - 20, page.Height - yPos);
+
+                    // Draw the text inside the rectangle
+                    tf.DrawString(item.ToString(), messageFont, XBrushes.Black, textRect, XStringFormats.TopLeft);
+
+                    // Move the yPos for the next line
+                    yPos += lineHeight;
+                }
+
+                // Add some spacing between messages
+                yPos += lineHeight;
+
+                // Create a new page if the current one is full
+                if (yPos >= page.Height - 40)
+                {
+                    page = pdf.AddPage();
+                    gfx = XGraphics.FromPdfPage(page);
+                    yPos = 20;
+                }
+            }
+
+            // Save the document to the memory stream
+            pdf.Save(memoryStream);
+            return memoryStream.ToArray(); // Return the PDF as byte array
+        }
     }
 
 }

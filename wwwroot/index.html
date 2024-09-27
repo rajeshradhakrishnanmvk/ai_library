@@ -220,6 +220,7 @@
               <button class="btn">Send</button>
             </fieldset>
           </form>
+          <button id="downloadBtn">Download Chat History PDF</button>
         </div>
       </div>
     </main>
@@ -275,22 +276,74 @@
             }
 
             function exportChat() {
-              const chatMessages = localStorage.getItem('chatMessages');
-              if (chatMessages) {
-                fetch('/api/exportChat', {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json'
-                  },
-                  body: chatMessages
-                })
-                .then(response => response.json())
-                .then(data => alert('Chat exported successfully.'))
-                .catch(error => console.error('Error exporting chat:', error));
-              } else {
-                alert('No chat messages found in local storage.');
-              }
+            const chatMessages = localStorage.getItem('chatMessages');
+            if (chatMessages) {
+              fetch('/api/exportChat', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: chatMessages
+              })
+              .then(response => {
+                if (response.ok) {
+                  return response.json();  // Ensure the server returns JSON
+                } else {
+                  throw new Error('Failed to export chat.');
+                }
+              })
+              .then(data => {
+                alert('Chat exported successfully.');
+              })
+              .catch(error => {
+                console.error('Error exporting chat:', error);
+              });
+            } else {
+              alert('No chat messages found in local storage.');
             }
+          }
+            async function downloadPdf(){
+              const chatView = document.getElementById('chatview');
+                const chatHistory = Array.from(chatView.children).map(message => ({
+                role: { label: message.classList.contains('user') ? 'user' : 'assistant' },
+                items: [{
+                  $type: 'TextContent',
+                  text: message.querySelector('.bubble').innerText
+                }]
+                }));
+
+                try {
+                const response = await fetch('/api/downloadpdf', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(chatHistory)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const blob = await response.blob();  // Convert response to blob
+
+                // Create a download link and click it programmatically to download the file
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'ChatHistory.pdf';  // Set the filename
+                document.body.appendChild(a);
+                a.click();  // Programmatically click the link
+                document.body.removeChild(a);  // Clean up the DOM
+                window.URL.revokeObjectURL(url);  // Release the object URL
+
+            } catch (error) {
+                console.error('Error downloading PDF:', error);
+            }
+        }
+
+        document.getElementById('downloadBtn').addEventListener('click', downloadPdf);
+            
     </script>
   </body>
 </html>
