@@ -159,7 +159,9 @@ public class JsonToHtmlMiddleware
                     {
 
                         int bookId = item.GetProperty("bookId").GetInt32();
-                        htmlBuilder.AppendFormat("<tr  hx-get='/api/books/selected/{0}' hx-trigger='click' hx-target='#details' hx-swap='innerHTML'>", bookId);
+                        //hx-get='/api/books/selected/{0}' hx-trigger='click' hx-target='#details' hx-swap='innerHTML'
+                        htmlBuilder.AppendFormat("<tr>");
+                        htmlBuilder.AppendFormat("<td><button class='btn primary' hx-get='/api/books/selected/{0}' hx-target='#details' hx-swap='innerHTML'>Select</button></td>", bookId);
                         foreach (var value in item.EnumerateObject())
                         {
                             htmlBuilder.AppendFormat("<td>{0}</td>", value.Value);
@@ -225,12 +227,14 @@ public class JsonToHtmlMiddleware
             {
                 // Single book case (Object without pagedBooks array)
                 var book = jsonDocument.RootElement;
+                int bookId = book.GetProperty("bookId").GetInt32();
+                htmlBuilder.AppendFormat("<td><button class='btn primary' hx-get='/api/books/selected/{0}' hx-target='#details' hx-swap='innerHTML'>Select</button></td>", bookId);
                 foreach (var value in book.EnumerateObject())
                 {
                     htmlBuilder.AppendFormat("<td>{0}</td>", value.Value);
                 }
 
-                int bookId = book.GetProperty("bookId").GetInt32();
+                
                 htmlBuilder.Append("<td><button class='btn danger'");
                 htmlBuilder.AppendFormat(" hx-get='/api/books/{0}/update'", bookId);
                 htmlBuilder.Append(" hx-trigger='edit'>Edit</button></td>");

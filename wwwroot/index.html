@@ -18,18 +18,30 @@
         transition: opacity 1s ease-out;
       }
       .main-container {
-        display: flex;
-        flex-direction: row;
-        gap: 20px;
-      }
-      .left-column {
-        flex: 1;
-      }
-      .right-column {
-        flex: 2;
-        display: flex;
-        flex-direction: column;
-      }
+          display: flex;
+          flex-direction: row;
+         
+        }
+        .left-column, .right-column {
+            padding: 1rem;
+            overflow: auto;
+        }
+        .left-column {
+            flex: 1;
+            background-color: #f0f0f0;
+        }
+        .right-column {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            background-color: #e0e0e0;
+        }
+        .divider {
+            width: 5px;
+            background-color: #ccc;
+            cursor: ew-resize;
+            position: relative;
+        }
       .chat-container {
         flex: 1;
         max-height: 900px;
@@ -133,6 +145,12 @@
           border: 1px solid #ddd;
           background-color: white;
       }
+      .divider {
+            width: 5px;
+            background-color: #ccc;
+            cursor: ew-resize;
+            position: relative;
+        }
     </style>
     <title>AI.Library</title>
   </head>
@@ -143,7 +161,6 @@
         <!-- Left Column -->
         <div class="left-column">
           <div id="bookresponse" class="table-container">
-          <!-- <div id="bookresponse" hx-get="/api/books/1" hx-trigger="load" hx-swap="beforeend"> -->
             <h3> 
               Search Books 
               <span class="htmx-indicator"> 
@@ -190,6 +207,7 @@
               <progress id='progress' value='0' max='100'></progress>
           </form>
         </div>
+        <div class="divider" id="divider"></div>
         <!-- Right Column -->
         <div class="right-column">
           <div id="details" class="details-container" hx-get="/api/chat/"  hx-target="#chatview" hx-trigger="htmx:afterSettle from:#details">
@@ -231,6 +249,32 @@
       crossorigin="anonymous"
     ></script>
     <script>
+              const divider = document.getElementById('divider');
+        const leftColumn = document.querySelector('.left-column');
+        const rightColumn = document.querySelector('.right-column');
+
+        let isDragging = false;
+
+        divider.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            document.body.style.cursor = 'ew-resize';
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+
+            const containerWidth = divider.parentElement.offsetWidth;
+            const leftWidth = e.clientX / containerWidth * 100;
+            const rightWidth = 100 - leftWidth;
+
+            leftColumn.style.flex = `0 0 ${leftWidth}%`;
+            rightColumn.style.flex = `0 0 ${rightWidth}%`;
+        });
+
+        document.addEventListener('mouseup', () => {
+            isDragging = false;
+            document.body.style.cursor = 'default';
+        });
       htmx.defineExtension('bookjson', {
         onEvent: function (name, evt) {
           if (name === "htmx:configRequest") {
@@ -245,23 +289,23 @@
           return payload;
         },
       });
-      document.addEventListener('DOMContentLoaded', function() {
-          const table = document.getElementById('books');
-          const rows = table.getElementsByTagName('tr');
+      // document.addEventListener('DOMContentLoaded', function() {
+      //     const table = document.getElementById('books');
+      //     const rows = table.getElementsByTagName('tr');
 
-          Array.from(rows).forEach(row => {
-              row.addEventListener('click', function() {
-                  clearSelections();
-                  row.classList.add('selected');
-              });
-          });
+      //     Array.from(rows).forEach(row => {
+      //         row.addEventListener('click', function() {
+      //             clearSelections();
+      //             row.classList.add('selected');
+      //         });
+      //     });
 
-          function clearSelections() {
-              Array.from(rows).forEach(row => {
-                  row.classList.remove('selected');
-              });
-          }
-      });
+      //     function clearSelections() {
+      //         Array.from(rows).forEach(row => {
+      //             row.classList.remove('selected');
+      //         });
+      //     }
+      // });
       function importChat() {
                 const chatView = document.getElementById('chatview');
                 const messages = Array.from(chatView.children).map(message => ({
@@ -343,7 +387,8 @@
         }
 
         document.getElementById('downloadBtn').addEventListener('click', downloadPdf);
-            
+        
+        
     </script>
   </body>
 </html>

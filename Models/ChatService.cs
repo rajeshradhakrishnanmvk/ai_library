@@ -8,6 +8,21 @@ using PdfSharpCore.Drawing.Layout;
 using System.Text;
 
 
+    // What is the book or central idea of the text?
+    // Who is the intended audience?
+    // What questions does the author address?
+    // How does the author structure the text?
+    // What are the key parts of the text?
+    // How do the key parts of the text interrelate?
+    // How do the key parts of the text relate to the book?
+    // What does the author do to generate interest in the argument?
+    // How does the author convince the readers of their argument’s merit?
+    // What evidence is provided in support of the book?
+    // Is the evidence in the text convincing?
+    // Has the author anticipated opposing views and countered them?
+    // Is the author’s reasoning sound?
+
+
 #pragma warning disable  SKEXP0001
 
 [EnableCors("Policy")]
