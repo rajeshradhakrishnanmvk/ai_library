@@ -102,7 +102,7 @@ app.MapGet("/api/books/{cursor:int}", async (int cursor, LibraryDbContext db) =>
 
 app.MapPost("/api/books/search", async (SearchRequest request, LibraryDbContext db) =>
 {
-   return await BookService.GeBooksByName(request.Search, db);;
+   return await BookService.GetBooksByName(request.Search, db);
 });
 
 app.MapPost("/api/books/", BookService.InsertBook);
