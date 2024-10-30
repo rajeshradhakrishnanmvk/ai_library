@@ -185,15 +185,22 @@ app.MapGet("/api/agent/ask", async (HttpContext httpContext) =>
     try
     {
         // Iterate through the asynchronous enumerable returned by AskAgent
+        int idx = 0;
         await foreach (var result in agentService.AskAgent(query, cancellationToken))
         {
+            var sanitizedResult = result.Replace("\n", "||");
+            //Console.WriteLine($"Batch: {idx}, Sending result: {sanitizedResult}");
             // Write each result to the response in the correct SSE format
-            await httpContext.Response.WriteAsync($"data: {result}\n\n", cancellationToken);
+            await httpContext.Response.WriteAsync($"data: {sanitizedResult}\n\n", cancellationToken);
             await httpContext.Response.Body.FlushAsync(cancellationToken);
         }
+        // Indicate end of stream
+        await httpContext.Response.WriteAsync("data: END||\n\n", cancellationToken);
+        await httpContext.Response.Body.FlushAsync(cancellationToken);
     }
     catch (Exception ex)
     {
+        var errorMessage = ex.Message.Replace("\n", "||");
         // Handle errors by sending them as SSE messages and then flushing
         await httpContext.Response.WriteAsync($"data: ERROR: {ex.Message}\n\n", cancellationToken);
         await httpContext.Response.Body.FlushAsync(cancellationToken);

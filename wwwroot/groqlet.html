@@ -66,22 +66,26 @@
       const source = new EventSource(`/api/agent/ask?query=${encodeURIComponent(queryInput)}`);
 
       source.onmessage = function (event) {
-          // Check for errors and display them in red
-          if (event.data.startsWith("ERROR:")) {
-              const errorMessage = event.data.replace("ERROR:", "").trim();
-              const errorElement = document.createElement("p");
-              errorElement.style.color = "red";
-              errorElement.textContent = `Error: ${errorMessage}`;
-              responseContainer.innerHTML = ""; // Clear previous messages
-              responseContainer.appendChild(errorElement);
-              source.close();
-              cancelButton.style.display = 'none';
-          } else {
-              // Append standard message
-              const message = document.createElement("p");
-              message.textContent = event.data;
-              responseContainer.appendChild(message);
-          }
+        let data = event.data;
+        //console.log(data);
+        // Check for "END" message to close the connection
+        if (data === "END") {
+            source.close();
+            cancelButton.style.display = 'none';
+        } 
+        // Check for errors and display them in red
+        else if (data.startsWith("ERROR:")) {
+            const errorMessage = data.replace("ERROR:", "").trim();
+            responseContainer.innerHTML = `<p style="color:red;">Error: ${errorMessage}</p>`;
+            source.close();
+            cancelButton.style.display = 'none';
+        } 
+        else {
+            // Append each message as a paragraph
+            const message = document.createElement("p");
+            message.textContent = data.replaceAll("||", "\\n");
+            responseContainer.appendChild(message);
+        }
       };
 
       // Handle connection errors
