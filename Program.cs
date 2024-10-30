@@ -167,11 +167,40 @@ app.MapPost("/api/upload", async (HttpRequest request, IBookBulkInserter inserte
     return Results.Ok("File uploaded and books inserted successfully.");
 });
 
-//create a route for the agent /api/agent/ask
-app.MapPost("/api/agent/ask", async (GroqAgentRequest request) =>
+app.MapGet("/api/agent/ask", async (HttpContext httpContext) =>
 {
-    var agentService = app.Services.GetRequiredService<IGroqAgentService>() as GroqAgentService;
-    var result = await agentService.AskAgent(request.Query);
-    return result;
+    httpContext.Response.ContentType = "text/event-stream";
+    var query = httpContext.Request.Query["query"].ToString();
+
+    if (string.IsNullOrWhiteSpace(query))
+    {
+        await httpContext.Response.WriteAsync("data: ERROR: Query parameter is required.\n\n");
+        await httpContext.Response.Body.FlushAsync();
+        return;
+    }
+
+    var agentService = httpContext.RequestServices.GetRequiredService<IGroqAgentService>() as GroqAgentService;
+    var cancellationToken = httpContext.RequestAborted;
+
+    try
+    {
+        // Iterate through the asynchronous enumerable returned by AskAgent
+        await foreach (var result in agentService.AskAgent(query, cancellationToken))
+        {
+            // Write each result to the response in the correct SSE format
+            await httpContext.Response.WriteAsync($"data: {result}\n\n", cancellationToken);
+            await httpContext.Response.Body.FlushAsync(cancellationToken);
+        }
+    }
+    catch (Exception ex)
+    {
+        // Handle errors by sending them as SSE messages and then flushing
+        await httpContext.Response.WriteAsync($"data: ERROR: {ex.Message}\n\n", cancellationToken);
+        await httpContext.Response.Body.FlushAsync(cancellationToken);
+    }
 });
+
+
+
+
 app.Run();

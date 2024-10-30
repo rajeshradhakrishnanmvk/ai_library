@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 public class GroqAgentService : IGroqAgentService
 {
@@ -9,54 +10,69 @@ public class GroqAgentService : IGroqAgentService
         _client = client;
     }
 
-    public async Task<string> AskAgent(string query)
+    public async IAsyncEnumerable<string> AskAgent(string query, [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        // "What should I read after Carrie by Stephen King published in 1974?"
-        
-        return await LoopAsync(query);
+       await foreach (var result in LoopAsync(query, cancellationToken: cancellationToken))
+       {
+           yield return result;
+       }
     }
 
-    public  async Task<string> LoopAsync(string query, int maxIterations = 5)
+
+    public async IAsyncEnumerable<string> LoopAsync(
+    string query, 
+    int maxIterations = 2, 
+    [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var agent = new GroqAgent(_client, systemPrompt);
         var tools = new List<string> { "textual_analysis", "get_books_self" };
         var nextPrompt = query;
 
-        for (int i = 0; i < maxIterations; i++)
+        // Exit after `maxIterations` of the `while` loop or if the answer is found
+        for (int iterationCount = 0; iterationCount < maxIterations; iterationCount++)
         {
-            var result = await agent.CallAsync(nextPrompt);
-            Console.WriteLine(result);
+            if (cancellationToken.IsCancellationRequested)
+                yield break;
 
-            if (result.Contains("PAUSE") && result.Contains("Action"))
+            for (int i = 0; i < maxIterations; i++)
             {
-                var actionMatch = Regex.Match(result, @"Action: ([a-z_]+): (.+)", RegexOptions.IgnoreCase);
-                if (actionMatch.Success)
+                var result = await agent.CallAsync(nextPrompt);
+                //Console.WriteLine($"Result: {result}");
+                yield return result;
+
+
+                if (result.Contains("PAUSE") && result.Contains("Action"))
                 {
-                    var chosenTool = actionMatch.Groups[1].Value;
-                    var arg = actionMatch.Groups[2].Value;
-
-                    if (tools.Contains(chosenTool))
+                    var actionMatch = Regex.Match(result, @"Action: ([a-z_]+): (.+)", RegexOptions.IgnoreCase);
+                    if (actionMatch.Success)
                     {
-                        var resultTool = await ExecuteToolAsync(chosenTool, arg);
-                        nextPrompt = $"Observation: {resultTool}";
-                    }
-                    else
-                    {
-                        nextPrompt = "Observation: Tool not found";
-                    }
+                        var chosenTool = actionMatch.Groups[1].Value;
+                        var arg = actionMatch.Groups[2].Value;
 
-                    Console.WriteLine(nextPrompt);
-                    continue;
+                        if (tools.Contains(chosenTool))
+                        {
+                            var resultTool = await ExecuteToolAsync(chosenTool, arg);
+                            nextPrompt = $"Observation: {resultTool}";
+                        }
+                        else
+                        {
+                            nextPrompt = "Observation: Tool not found";
+                        }
+                        //Console.WriteLine($"Next Prompt: {nextPrompt}");
+                        yield return nextPrompt;
+                        continue;
+                    }
+                }
+
+                // Break the loop if an answer is found
+                if (result.Contains("Answer"))
+                {
+                    Console.WriteLine($"Answer found: {result}");
+                    yield break;
+                    //break;
                 }
             }
-
-            if (result.Contains("Answer"))
-            {
-                break;
-            }
         }
-
-        return string.Empty;
     }
     private static async Task<string> ExecuteToolAsync(string toolName, string argument)
     {
@@ -75,7 +91,7 @@ public class GroqAgentService : IGroqAgentService
     private static Task<string> TextualAnalysisAsync(string text)
     {
         Console.WriteLine($"TextualAnalysisAsync {text}");
-        return Task.FromResult($"From the list of book, select key excerpts that represent central themes, arguments, or ideas. Evaluate the structure, thesis, intended audience, and evidence presented. Identify recurring patterns, relationships between ideas, and the author's techniques to persuade or inform the reader, comparing these across the books. ");
+        return Task.FromResult($"from the recommended book, {text}, select key excerpts that represent central themes, arguments, or ideas. Evaluate the structure, thesis, intended audience, and evidence presented. Identify recurring patterns, relationships between ideas, and the author's techniques to persuade or inform the reader, comparing these across the books.");
     }
 
     private static Task<string> GetBooksSelfAsync(string query)
