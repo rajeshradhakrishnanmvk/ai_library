@@ -18,7 +18,7 @@ public class Book
     [JsonPropertyName("library")]
     public string? Library { get; set; }
 
-    [JsonPropertyName("details")]
+    [JsonPropertyName("BooksDetails")]
     public BooksDetails BooksDetails { get; set; } = null!;
 
 }

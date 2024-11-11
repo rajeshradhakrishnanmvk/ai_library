@@ -1,7 +1,13 @@
-    namespace BooksApi.Models;
-    public class BooksDetails
-    {
-        public BooksChat BooksChat { get; set; } = null!;
-        public string? AgentName { get; set; }
-        public string? AgentInstruction { get; set; }
-    }
+namespace BooksApi.Models;
+using System.Text.Json.Serialization;
+public class BooksDetails
+{
+    [JsonPropertyName("BooksChat")]
+    public BooksChat BooksChat { get; set; } = null!;
+
+    [JsonPropertyName("AgentName")]
+    public string? AgentName { get; set; }
+
+    [JsonPropertyName("AgentInstruction")]
+    public string? AgentInstruction { get; set; }
+}

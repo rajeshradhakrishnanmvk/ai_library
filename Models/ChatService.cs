@@ -45,8 +45,8 @@ public class ChatService
         var historyJson = session.GetString("ChatHistory");
         var selectedBook = session.GetString("SelectedBook");
         var selBook = JsonSerializer.Deserialize<Book>(selectedBook);
-        var history = string.IsNullOrEmpty(historyJson) ? new ChatHistory($"You are a helpful assistant and you know about the author {selBook?.Author ?? "Stephen King"}, about the book {selBook?.Name ?? "Bag of Bones"} which was published during {selBook?.Description ?? "1998 "}") : JsonSerializer.Deserialize<ChatHistory>(historyJson);
-
+        //var history = string.IsNullOrEmpty(historyJson) ? new ChatHistory($"You are a helpful assistant and you know about the author {selBook?.Author ?? "Stephen King"}, about the book {selBook?.Name ?? "Bag of Bones"} which was published during {selBook?.Description ?? "1998 "}") : JsonSerializer.Deserialize<ChatHistory>(historyJson);
+        var history = new ChatHistory(selBook?.BooksDetails.AgentInstruction);
         return TypedResults.Ok(history);
     }
     public async Task<IResult> AIResponse(BookMessage message)
@@ -55,8 +55,8 @@ public class ChatService
         var historyJson = session.GetString("ChatHistory");
         var selectedBook = session.GetString("SelectedBook");
         var selBook = JsonSerializer.Deserialize<Book>(selectedBook);
-        var history = string.IsNullOrEmpty(historyJson) ? new ChatHistory($"You are a helpful assistant and you know about the author {selBook?.Author ?? "Stephen King"}, about the book {selBook?.Name ?? "Bag of Bones"} which was published during {selBook?.Description ?? "1998 "}") : JsonSerializer.Deserialize<ChatHistory>(historyJson);
-
+        //var history = string.IsNullOrEmpty(historyJson) ? new ChatHistory($"You are a helpful assistant and you know about the author {selBook?.Author ?? "Stephen King"}, about the book {selBook?.Name ?? "Bag of Bones"} which was published during {selBook?.Description ?? "1998 "}") : JsonSerializer.Deserialize<ChatHistory>(historyJson);
+        var history = new ChatHistory(selBook?.BooksDetails.AgentInstruction);
         history.AddUserMessage(message.Content);
 
         var result = await _chatCompletionService.GetChatMessageContentAsync(
