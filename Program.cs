@@ -39,7 +39,7 @@ builder.Services.AddTransient((serviceProvider)=> {
 });
 
 // Register ChatService and other necessary services
-builder.Services.AddSingleton<ChatService>();
+builder.Services.AddScoped<ChatService>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
@@ -137,7 +137,12 @@ app.MapPost("/api/downloadpdf", (ChatHistory message, ChatService chatService) =
     // Return the PDF file to the client
     return Results.File(pdfFile, "application/pdf", "ChatHistory.pdf");
 });
-
+//create an post endpoint for updating the chat
+app.MapPost("/api/updateChat", async (LibraryDbContext db, ChatService chatService) =>
+{
+    var result = await chatService.UpdateBooksChat();
+    return result;
+});
 app.MapPost("/api/upload", async (HttpRequest request, IBookBulkInserter inserter) =>
 {
     if (!request.HasFormContentType || !request.Form.Files.Any())

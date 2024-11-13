@@ -210,7 +210,8 @@ public class JsonToHtmlMiddleware
                 {
                     // Serialize the book details back to a JSON string
                     var correctedJson = JsonSerializer.Serialize(bookDetails);
-
+                    // remove ChatHistory from session
+                    _context.Session.Remove("ChatHistory");
                     // Set the session variable with the corrected JSON string
                     _context.Session.SetString("SelectedBook", correctedJson);
                 }
