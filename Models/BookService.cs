@@ -76,7 +76,7 @@ public class BookService
         Book.BooksDetails = new BooksDetails 
                             { AgentName = $"Agent-{Book.Author}", 
                               AgentInstruction =instructions,
-                              BooksChat = new BooksChat("system", instructions)
+                              BooksChat = new List<BooksChat> { new BooksChat("system", instructions) }
                               };
         db.Books.Add(Book);
         await db.SaveChangesAsync();

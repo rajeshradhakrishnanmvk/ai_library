@@ -20,7 +20,7 @@ namespace BooksApi.Data
             book => book.BooksDetails, ownedNavigationBuilder =>
             {
                 ownedNavigationBuilder.ToJson();
-                ownedNavigationBuilder.OwnsOne(bookDetails => bookDetails.BooksChat);
+                ownedNavigationBuilder.OwnsMany(bookDetails => bookDetails.BooksChat);
             });
            // modelBuilder.Entity<Book>().OwnsOne(e => e.BooksDetails).OwnsOne(e => e.BooksChat);
 

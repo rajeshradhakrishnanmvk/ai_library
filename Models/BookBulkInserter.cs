@@ -34,13 +34,8 @@ public class BookBulkInserter : IBookBulkInserter
         }
 
         // Step 2: Delete all existing books from the database
-        var existingBooks = _context.Books.ToList();
-        
-        if (existingBooks.Any())
-        {
-            _context.Books.RemoveRange(existingBooks);
-            await _context.SaveChangesAsync(); // Save changes to delete books
-        }
+        _context.Books.RemoveRange(_context.Books);
+
 
         // Step 3: Add the new books to the database
         foreach (var book in books)
@@ -55,7 +50,7 @@ public class BookBulkInserter : IBookBulkInserter
             aiBook.BooksDetails = new BooksDetails 
                                 { AgentName = $"Agent-{book?.Author}", 
                                 AgentInstruction =instructions,
-                                BooksChat = new BooksChat("system", instructions)
+                                BooksChat = new List<BooksChat> { new BooksChat("system", instructions) }
                                 };
             _context.Books.Add(aiBook);
         }
