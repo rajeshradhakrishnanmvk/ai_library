@@ -6,37 +6,39 @@ using PdfSharpCore.Pdf;
 using PdfSharpCore.Drawing;
 using PdfSharpCore.Drawing.Layout;
 using System.Text;
+using System.Runtime.InteropServices;
 
 
-    // What is the book or central idea of the text?
-    // Who is the intended audience?
-    // What questions does the author address?
-    // How does the author structure the text?
-    // What are the key parts of the text?
-    // How do the key parts of the text interrelate?
-    // How do the key parts of the text relate to the book?
-    // What does the author do to generate interest in the argument?
-    // How does the author convince the readers of their argument’s merit?
-    // What evidence is provided in support of the book?
-    // Is the evidence in the text convincing?
-    // Has the author anticipated opposing views and countered them?
-    // Is the author’s reasoning sound?
+// What is the book or central idea of the text?
+// Who is the intended audience?
+// What questions does the author address?
+// How does the author structure the text?
+// What are the key parts of the text?
+// How do the key parts of the text interrelate?
+// How do the key parts of the text relate to the book?
+// What does the author do to generate interest in the argument?
+// How does the author convince the readers of their argument’s merit?
+// What evidence is provided in support of the book?
+// Is the evidence in the text convincing?
+// Has the author anticipated opposing views and countered them?
+// Is the author’s reasoning sound?
 
 
-#pragma warning disable  SKEXP0001
+#pragma warning disable SKEXP0001
 
 [EnableCors("Policy")]
 public class ChatService
 {
     private readonly Kernel _kernel;
+    private readonly LibraryDbContext _db; // Add this line
     private readonly IChatCompletionService _chatCompletionService;
     private readonly IHttpContextAccessor _httpContextAccessor;
-
-    public ChatService(Kernel kernel, IHttpContextAccessor httpContextAccessor)
+    public ChatService(Kernel kernel, IHttpContextAccessor httpContextAccessor, LibraryDbContext dbContext)
     {
         _kernel = kernel;
-        _httpContextAccessor = httpContextAccessor;
         _chatCompletionService = _kernel.GetRequiredService<IChatCompletionService>();
+        _db = dbContext;
+        _httpContextAccessor = httpContextAccessor;
     }
     //create a get method for history
     public IResult GetHistory()
@@ -47,9 +49,38 @@ public class ChatService
         var selBook = JsonSerializer.Deserialize<Book>(selectedBook);
         //var history = string.IsNullOrEmpty(historyJson) ? new ChatHistory($"You are a helpful assistant and you know about the author {selBook?.Author ?? "Stephen King"}, about the book {selBook?.Name ?? "Bag of Bones"} which was published during {selBook?.Description ?? "1998 "}") : JsonSerializer.Deserialize<ChatHistory>(historyJson);
         var history = new ChatHistory(selBook?.BooksDetails.AgentInstruction);
+        foreach (var chat in selBook.BooksDetails.BooksChat)
+        {
+            if (chat.Role == "assistant")
+            {
+                history.AddAssistantMessage(chat.Message);
+            }
+            else if (chat.Role == "user")
+            {
+                history.AddUserMessage(chat.Message);
+            }
+        }
         return TypedResults.Ok(history);
     }
-    
+    public async Task<IResult> UpdateBooksChat() 
+    {
+        var session = _httpContextAccessor.HttpContext.Session;
+        var selectedBook = session.GetString("SelectedBook");
+        var selBook = JsonSerializer.Deserialize<Book>(selectedBook);
+        if (selBook != null)
+        {
+            var book = await _db.Books.FindAsync(selBook.BookId);
+            if (book != null)
+            {
+                book.BooksDetails.BooksChat = selBook.BooksDetails.BooksChat;
+                await _db.SaveChangesAsync();
+            }
+            book.BooksDetails.BooksChat = selBook.BooksDetails.BooksChat;
+            await _db.SaveChangesAsync();
+        }
+
+        return TypedResults.Ok(selBook);
+    }
     public async Task<IResult> AIResponse(BookMessage message)
     {
         var session = _httpContextAccessor.HttpContext.Session;
@@ -59,9 +90,22 @@ public class ChatService
         var history = string.IsNullOrEmpty(historyJson) ?  
                       new ChatHistory(selBook?.BooksDetails.AgentInstruction) : 
                       JsonSerializer.Deserialize<ChatHistory>(historyJson);
-        //var history = new ChatHistory(selBook?.BooksDetails.AgentInstruction);
+       foreach (var chat in selBook.BooksDetails.BooksChat)
+        {
+            if (chat.Role == "assistant")
+            {
+                history.AddAssistantMessage(chat.Message);
+            }
+            else if (chat.Role == "user")
+            {
+                history.AddUserMessage(chat.Message);
+            }
+        }
         history.AddUserMessage(message.Content);
-       
+              if (selBook?.BooksDetails?.BooksChat is List<BooksChat> booksUserChat)
+        {
+            booksUserChat.Add(new BooksChat("user", message.Content));
+        }
 
         var result = await _chatCompletionService.GetChatMessageContentAsync(
             history,
@@ -85,11 +129,12 @@ public class ChatService
 
 
         history.AddAssistantMessage(result.Content);
-        if (selBook?.BooksDetails?.BooksChat is List<BooksChat> booksChatList)
+        if (selBook?.BooksDetails?.BooksChat is List<BooksChat> booksAssistantChat)
         {
-            booksChatList.Add(new BooksChat("assistant", result.Content));
+            booksAssistantChat.Add(new BooksChat("assistant", result.Content));
         }
         session.SetString("ChatHistory", JsonSerializer.Serialize(history));
+        session.SetString("SelectedBook", selBook != null ? JsonSerializer.Serialize(selBook) : "");
         //send completionTokens and promptTokens to the client
         //return TypedResults.Ok(new { history, completionTokens, promptTokens, totalTokens });
        return TypedResults.Ok(history);
