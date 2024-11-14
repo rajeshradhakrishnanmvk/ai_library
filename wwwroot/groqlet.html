@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Agent Interaction</title>
+
+    <!-- Link PicoCSS for styling -->
+    <link rel="stylesheet" href="https://unpkg.com/@picocss/pico@latest/css/pico.min.css">
+
+    <!-- Include HTMX for AJAX functionality -->
+    <script src="https://unpkg.com/htmx.org@1.9.0"></script>
+</head>
+<body>
+
+    <header>
+        <h1>Interact with AI Agent</h1>
+        <p>Submit a query to receive a book recommendation from the agent.</p>
+    </header>
+
+    <main class="container">
+      <!-- Form to submit the query -->
+      <form id="queryForm" hx-trigger="submit" hx-target="#response" hx-swap="outerHTML">
+          <label for="userQuery">Ask the Agent:</label>
+          <input type="text" id="queryInput" name="query" placeholder="What book should I read next?" required>
+          <button type="submit">Send Query</button>
+          <button type="button" id="cancelButton" style="display: none;">Cancel</button>
+      </form>
+  
+      <!-- Section to display the response from the agent -->
+      <div id="response">
+          <h2>Agent's Response</h2>
+          <div id="responseContent">
+              <p>No response yet. Submit a query above.</p>
+          </div>
+      </div>
+  </main>
+
+</body>
+<script>
+    htmx.defineExtension('bookjson', {
+      onEvent: function (name, evt) {
+        if (name === "htmx:configRequest") {
+          evt.detail.headers["Content-Type"] = "application/json";
+          evt.detail.headers["X-API-Key"] = "sjk_xxx";
+        }
+      },
+      encodeParameters: function (xhr, parameters, elt) {
+        xhr.overrideMimeType("text/json"); // override default mime type
+        var payload = JSON.stringify(parameters);
+        console.log(payload);
+        return payload;
+      },
+    });
+    document.getElementById('queryForm').addEventListener('submit', function (event) {
+      event.preventDefault();
+      const queryInput = document.getElementById('queryInput').value;
+
+      const responseContainer = document.getElementById('responseContent');
+      responseContainer.innerHTML = "<p>Loading...</p>";
+
+      const cancelButton = document.getElementById('cancelButton');
+      cancelButton.style.display = 'inline';
+
+      // Initialize EventSource with query parameter
+      const source = new EventSource(`/api/agent/ask?query=${encodeURIComponent(queryInput)}`);
+
+      source.onmessage = function (event) {
+        let data = event.data;
+        //console.log(data);
+        // Check for "END" message to close the connection
+        if (data === "END") {
+            source.close();
+            cancelButton.style.display = 'none';
+        } 
+        // Check for errors and display them in red
+        else if (data.startsWith("ERROR:")) {
+            const errorMessage = data.replace("ERROR:", "").trim();
+            responseContainer.innerHTML = `<p style="color:red;">Error: ${errorMessage}</p>`;
+            source.close();
+            cancelButton.style.display = 'none';
+        } 
+        else {
+            // Append each message as a paragraph
+            const message = document.createElement("p");
+            message.textContent = data.replaceAll("||", "\\n");
+            responseContainer.appendChild(message);
+        }
+      };
+
+      // Handle connection errors
+      source.onerror = function () {
+          source.close();
+          const errorMessage = "Connection error occurred. The server may be down or the connection was interrupted.";
+          const errorElement = document.createElement("p");
+          errorElement.style.color = "red";
+          errorElement.textContent = `Error: ${errorMessage}`;
+          //responseContainer.innerHTML = ""; // Clear previous messages
+          responseContainer.appendChild(errorElement);
+          cancelButton.style.display = 'none';
+      };
+
+      // Cancel button to stop the EventSource
+      cancelButton.addEventListener('click', function () {
+          if (source) {
+              source.close();
+              cancelButton.style.display = 'none';
+              responseContainer.appendChild(document.createElement("p")).textContent = "Streaming canceled by user.";
+          }
+      });
+  });
+
+
+  </script>
+</html>

@@ -45,19 +45,23 @@ public class ChatService
         var historyJson = session.GetString("ChatHistory");
         var selectedBook = session.GetString("SelectedBook");
         var selBook = JsonSerializer.Deserialize<Book>(selectedBook);
-        var history = string.IsNullOrEmpty(historyJson) ? new ChatHistory($"You are a helpful assistant and you know about the author {selBook?.Author ?? "Stephen King"}, about the book {selBook?.Name ?? "Bag of Bones"} which was published during {selBook?.Description ?? "1998 "}") : JsonSerializer.Deserialize<ChatHistory>(historyJson);
-
+        //var history = string.IsNullOrEmpty(historyJson) ? new ChatHistory($"You are a helpful assistant and you know about the author {selBook?.Author ?? "Stephen King"}, about the book {selBook?.Name ?? "Bag of Bones"} which was published during {selBook?.Description ?? "1998 "}") : JsonSerializer.Deserialize<ChatHistory>(historyJson);
+        var history = new ChatHistory(selBook?.BooksDetails.AgentInstruction);
         return TypedResults.Ok(history);
     }
+    
     public async Task<IResult> AIResponse(BookMessage message)
     {
         var session = _httpContextAccessor.HttpContext.Session;
         var historyJson = session.GetString("ChatHistory");
         var selectedBook = session.GetString("SelectedBook");
         var selBook = JsonSerializer.Deserialize<Book>(selectedBook);
-        var history = string.IsNullOrEmpty(historyJson) ? new ChatHistory($"You are a helpful assistant and you know about the author {selBook?.Author ?? "Stephen King"}, about the book {selBook?.Name ?? "Bag of Bones"} which was published during {selBook?.Description ?? "1998 "}") : JsonSerializer.Deserialize<ChatHistory>(historyJson);
-
+        var history = string.IsNullOrEmpty(historyJson) ?  
+                      new ChatHistory(selBook?.BooksDetails.AgentInstruction) : 
+                      JsonSerializer.Deserialize<ChatHistory>(historyJson);
+        //var history = new ChatHistory(selBook?.BooksDetails.AgentInstruction);
         history.AddUserMessage(message.Content);
+       
 
         var result = await _chatCompletionService.GetChatMessageContentAsync(
             history,
@@ -81,6 +85,10 @@ public class ChatService
 
 
         history.AddAssistantMessage(result.Content);
+        if (selBook?.BooksDetails?.BooksChat is List<BooksChat> booksChatList)
+        {
+            booksChatList.Add(new BooksChat("assistant", result.Content));
+        }
         session.SetString("ChatHistory", JsonSerializer.Serialize(history));
         //send completionTokens and promptTokens to the client
         //return TypedResults.Ok(new { history, completionTokens, promptTokens, totalTokens });

@@ -102,7 +102,7 @@ app.MapGet("/api/books/{cursor:int}", async (int cursor, LibraryDbContext db) =>
 
 app.MapPost("/api/books/search", async (SearchRequest request, LibraryDbContext db) =>
 {
-   return await BookService.GeBooksByName(request.Search, db);;
+   return await BookService.GetBooksByName(request.Search, db);
 });
 
 app.MapPost("/api/books/", BookService.InsertBook);
@@ -167,11 +167,47 @@ app.MapPost("/api/upload", async (HttpRequest request, IBookBulkInserter inserte
     return Results.Ok("File uploaded and books inserted successfully.");
 });
 
-//create a route for the agent /api/agent/ask
-app.MapPost("/api/agent/ask", async (GroqAgentRequest request) =>
+app.MapGet("/api/agent/ask", async (HttpContext httpContext) =>
 {
-    var agentService = app.Services.GetRequiredService<IGroqAgentService>() as GroqAgentService;
-    var result = await agentService.AskAgent(request.Query);
-    return result;
+    httpContext.Response.ContentType = "text/event-stream";
+    var query = httpContext.Request.Query["query"].ToString();
+
+    if (string.IsNullOrWhiteSpace(query))
+    {
+        await httpContext.Response.WriteAsync("data: ERROR: Query parameter is required.\n\n");
+        await httpContext.Response.Body.FlushAsync();
+        return;
+    }
+
+    var agentService = httpContext.RequestServices.GetRequiredService<IGroqAgentService>() as GroqAgentService;
+    var cancellationToken = httpContext.RequestAborted;
+
+    try
+    {
+        // Iterate through the asynchronous enumerable returned by AskAgent
+        int idx = 0;
+        await foreach (var result in agentService.AskAgent(query, cancellationToken))
+        {
+            var sanitizedResult = result.Replace("\n", "||");
+            //Console.WriteLine($"Batch: {idx}, Sending result: {sanitizedResult}");
+            // Write each result to the response in the correct SSE format
+            await httpContext.Response.WriteAsync($"data: {sanitizedResult}\n\n", cancellationToken);
+            await httpContext.Response.Body.FlushAsync(cancellationToken);
+        }
+        // Indicate end of stream
+        await httpContext.Response.WriteAsync("data: END||\n\n", cancellationToken);
+        await httpContext.Response.Body.FlushAsync(cancellationToken);
+    }
+    catch (Exception ex)
+    {
+        var errorMessage = ex.Message.Replace("\n", "||");
+        // Handle errors by sending them as SSE messages and then flushing
+        await httpContext.Response.WriteAsync($"data: ERROR: {ex.Message}\n\n", cancellationToken);
+        await httpContext.Response.Body.FlushAsync(cancellationToken);
+    }
 });
+
+
+
+
 app.Run();

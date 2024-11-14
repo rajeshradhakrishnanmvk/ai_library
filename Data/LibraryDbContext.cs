@@ -15,7 +15,14 @@ namespace BooksApi.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-            modelBuilder.Entity<Book>().HasData(GetBooks());
+            //modelBuilder.Entity<Book>().HasData(GetBooks());
+            modelBuilder.Entity<Book>().OwnsOne(
+            book => book.BooksDetails, ownedNavigationBuilder =>
+            {
+                ownedNavigationBuilder.ToJson();
+                ownedNavigationBuilder.OwnsMany(bookDetails => bookDetails.BooksChat);
+            });
+           // modelBuilder.Entity<Book>().OwnsOne(e => e.BooksDetails).OwnsOne(e => e.BooksChat);
 
             
         }

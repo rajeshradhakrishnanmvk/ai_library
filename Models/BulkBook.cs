@@ -1,7 +1,7 @@
 namespace BooksApi.Models;
 using System.Text.Json.Serialization;
 
-public class Book
+public class BulkBook
 {
     [JsonPropertyName("bookId")]
     public int BookId { get; set; }
@@ -17,8 +17,5 @@ public class Book
 
     [JsonPropertyName("library")]
     public string? Library { get; set; }
-
-    [JsonPropertyName("BooksDetails")]
-    public BooksDetails BooksDetails { get; set; } = null!;
 
 }

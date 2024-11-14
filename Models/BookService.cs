@@ -38,7 +38,7 @@ public class BookService
         return TypedResults.Ok(await db.Books.ToListAsync());
     }
 
-    public static async Task<IResult> GeBooksByName(string Name, LibraryDbContext db)
+    public static async Task<IResult> GetBooksByName(string Name, LibraryDbContext db)
     {
         int nextCursor = 0;
         // Check if Name is empty or null
@@ -71,6 +71,13 @@ public class BookService
 
     public static async Task<IResult> InsertBook(Book Book, LibraryDbContext db)
     {
+        string instructions =  $"You are a helpful assistant and you know about the author {Book?.Author ?? "Stephen King"}, about the book {Book.Name ?? "Bag of Bones"} which was published during {Book?.Description ?? "1998 "}";
+
+        Book.BooksDetails = new BooksDetails 
+                            { AgentName = $"Agent-{Book.Author}", 
+                              AgentInstruction =instructions,
+                              BooksChat = new List<BooksChat> { new BooksChat("system", instructions) }
+                              };
         db.Books.Add(Book);
         await db.SaveChangesAsync();
 

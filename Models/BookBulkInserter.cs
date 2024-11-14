@@ -18,7 +18,7 @@ public class BookBulkInserter : IBookBulkInserter
 
     public async Task BulkInsertBooksFromCsv(string csvFilePath)
     {
-        var books = new List<Book>();
+        var books = new List<BulkBook>();
 
         var csvConfig = new CsvConfiguration(CultureInfo.InvariantCulture)
         {
@@ -30,22 +30,29 @@ public class BookBulkInserter : IBookBulkInserter
         using (var reader = new StreamReader(csvFilePath))
         using (var csv = new CsvReader(reader, csvConfig))
         {
-            books = csv.GetRecords<Book>().ToList();
+            books = csv.GetRecords<BulkBook>().ToList();
         }
 
         // Step 2: Delete all existing books from the database
-        var existingBooks = _context.Books.ToList();
-        
-        if (existingBooks.Any())
-        {
-            _context.Books.RemoveRange(existingBooks);
-            await _context.SaveChangesAsync(); // Save changes to delete books
-        }
+        _context.Books.RemoveRange(_context.Books);
+
 
         // Step 3: Add the new books to the database
         foreach (var book in books)
         {
-            _context.Books.Add(book);
+            string instructions =  $"You are a helpful assistant and you know about the author {book?.Author ?? "Stephen King"}, about the book {book.Name ?? "Bag of Bones"} which was published during {book?.Description ?? "1998 "}";
+            Book aiBook = new Book();
+            aiBook.BookId = book.BookId;
+            aiBook.Name = book?.Name;
+            aiBook.Author = book?.Author;
+            aiBook.Description = book?.Description;
+            aiBook.Library = book?.Library;
+            aiBook.BooksDetails = new BooksDetails 
+                                { AgentName = $"Agent-{book?.Author}", 
+                                AgentInstruction =instructions,
+                                BooksChat = new List<BooksChat> { new BooksChat("system", instructions) }
+                                };
+            _context.Books.Add(aiBook);
         }
 
         // Step 4: Save all changes (insert new books)
