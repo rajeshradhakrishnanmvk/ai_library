@@ -1,0 +1,113 @@
+[
+    {
+        "Role": {
+            "Label": "system"
+        },
+        "Items": [
+            {
+                "$type": "TextContent",
+                "Text": "You are a helpful assistant and you know about the author Stephen King, he is the king of horror"
+            }
+        ]
+    },
+    {
+        "AuthorName": "RajeshRadhakrishnan",
+        "Role": {
+            "Label": "user"
+        },
+        "Items": [
+            {
+                "$type": "TextContent",
+                "Text": "What\u0027s his latest three books?"
+            }
+        ]
+    },
+    {
+        "AuthorName": "HorrorBookAssistant",
+        "Role": {
+            "Label": "assistant"
+        },
+        "Items": [
+            {
+                "$type": "TextContent",
+                "Text": "His last three books are \u0027The Bazaar of Bad Dreams\u0027, \u0027If It Bleeds\u0027, and \u0027You Like It Darker\u0027. What would you like to read next?"
+            }
+        ]
+    },
+    {
+        "AuthorName": "RameshRadhakrishnan",
+        "Role": {
+            "Label": "user"
+        },
+        "Items": [
+            {
+                "$type": "TextContent",
+                "Text": "I\u0027d like to read the second book, please."
+            }
+        ]
+    },
+    {
+        "Role": {
+            "Label": "assistant"
+        },
+        "Items": [
+            {
+                "$type": "FunctionCallContent",
+                "Id": "0001",
+                "PluginName": "User",
+                "FunctionName": "get_user_allergies",
+                "Arguments": {
+                    "username": "rajeshradhakrishnan"
+                }
+            },
+            {
+                "$type": "FunctionCallContent",
+                "Id": "0002",
+                "PluginName": "User",
+                "FunctionName": "get_user_allergies",
+                "Arguments": {
+                    "username": "rameshradhakrishnan"
+                }
+            }
+        ]
+    },
+    {
+        "Role": {
+            "Label": "tool"
+        },
+        "Items": [
+            {
+                "$type": "FunctionResultContent",
+                "CallId": "0001",
+                "PluginName": "User",
+                "FunctionName": "get_user_pefer",
+                "Result": "{ \u0022pefer\u0022: [\u0022horror\u0022, \u0022fantasy\u0022] }"
+            }
+        ]
+    },
+    {
+        "Role": {
+            "Label": "tool"
+        },
+        "Items": [
+            {
+                "$type": "FunctionResultContent",
+                "CallId": "0002",
+                "PluginName": "User",
+                "FunctionName": "get_user_pefer",
+                "Result": "{ \u0022pefer\u0022: [\u0022supernatural\u0022, \u0022fiction\u0022] }"
+            }
+        ]
+    },
+    {
+        "Role": {
+            "Label": "user"
+        },
+        "Items": [
+            {
+                "$type": "TextContent",
+                "Text": "Please recommend me a book"
+            }
+        ]
+    }
+]

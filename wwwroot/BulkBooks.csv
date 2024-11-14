@@ -1,0 +1,101 @@
+BookID,Name,Author,Description,Library
+1,The Odyssey,Homer, 8th Century BC, To Read
+2,Uncle Tom’s Cabin,Harriet Beecher Stowe, 1852, To Read
+3,Frankenstein,Mary Shelley, 1818, To Read
+4,Nineteen Eighty-Four,George Orwell, 1949, To Read
+5,Things Fall Apart,Chinua Achebe, 1958, To Read
+6,One Thousand and One Nights,various authors, 8th-18th Centuries, To Read
+7,Don Quixote,Miguel de Cervantes, 1605-1615, To Read
+8,Hamlet,William Shakespeare, 1603, To Read
+9,One Hundred Years of Solitude,Gabriel García Márquez, 1967, To Read
+10,The Iliad,Homer, 8th Century BC, To Read
+11,Beloved,Toni Morrison, 1987, To Read
+12,The Divine Comedy,Dante Alighieri, 1308-1320, To Read
+13,Romeo and Juliet,William Shakespeare, 1597, To Read
+14,The Epic of Gilgamesh,author unknown, circa 22nd-10th Centuries BC, To Read
+15,Harry Potter Series,JK Rowling, 1997-2007, To Read
+16,The Handmaid's Tale,Margaret Atwood, 1985, To Read
+17,Ulysses,James Joyce, 1922, To Read
+18,Animal Farm,George Orwell, 1945, To Read
+19,Jane Eyre,Charlotte Brontë, 1847, To Read
+20,Madame Bovary,Gustave Flaubert, 1856, To Read
+21,Romance of the Three Kingdoms,Luo Guanzhong, 1321-1323, To Read
+22,Journey to the West,Wu Cheng'en, circa 1592, To Read
+23,Crime and Punishment,Fyodor Dostoyevksy, 1866, To Read
+24,Pride and Prejudice,Jane Austen, 1813, To Read
+25,Water Margin,attributed to Shi Nai'an, 1589, To Read
+26,War and Peace,Leo Tolstoy, 1865-1867, To Read
+27,To Kill a Mockingbird,Harper Lee, 1960, To Read
+28,Wide Sargasso Sea,Jean Rhys, 1966, To Read
+29,Aesop's Fables,Aesop, circa 620 to 560 BC, To Read
+30,Candide,Voltaire, 1759, To Read
+31,Medea,Euripides, 431 BC, To Read
+32,The Mahabharata,attributed to Vyasa, 4th Century BC, To Read
+33,King Lear,William Shakespeare, 1608, To Read
+34,The Tale of Genji,Murasaki Shikibu, before 1021, To Read
+35,The Sorrows of Young Werther,Johann Wolfgang von Goethe, 1774, To Read
+36,The Trial,Franz Kafka, 1925, To Read
+37,Remembrance of Things Past,Marcel Proust, 1913-1927, To Read
+38,Wuthering Heights,Emily Brontë, 1847, To Read
+39,Invisible Man,Ralph Ellison, 1952, To Read
+40,Moby-Dick,Herman Melville, 1851, To Read
+41,Their Eyes Were Watching God,Zora Neale Hurston, 1937, To Read
+42,To the Lighthouse,Virginia Woolf, 1927, To Read
+43,The True Story of Ah Q,Lu Xun, 1921-1922, To Read
+44,Alice's Adventures in Wonderland,Lewis Carroll, 1865, To Read
+45,Anna Karenina,Leo Tolstoy, 1873-1877, To Read
+46,Heart of Darkness,Joseph Conrad, 1899, To Read
+47,Monkey Grip,Helen Garner, 1977, To Read
+48,Mrs Dalloway,Virginia Woolf, 1925, To Read
+49,Oedipus the King,Sophocles, 429 BC, To Read
+50,The Metamorphosis,Franz Kafka, 1915, To Read
+51,The Oresteia,Aeschylus, 5th Century BC, To Read
+52,Cinderella,unknown author, unknown date, To Read
+53,Howl,Allen Ginsberg, 1956, To Read
+54,Les Misérables,Victor Hugo, 1862, To Read
+55,Middlemarch,George Eliot, 1871-1872, To Read
+56,Pedro Páramo,Juan Rulfo, 1955, To Read
+57,The Butterfly Lovers,folk story, various versions, To Read
+58,The Canterbury Tales,Geoffrey Chaucer, 1387, To Read
+59,The Panchatantra,attributed to Vishnu Sharma, circa 300 BC, To Read
+60,The Posthumous Memoirs of Bras Cubas,Joaquim Maria Machado de Assis, 1881, To Read
+61,The Prime of Miss Jean Brodie,Muriel Spark, 1961, To Read
+62,The Ragged-Trousered Philanthropists,Robert Tressell, 1914, To Read
+63,Song of Lawino,Okot p'Bitek, 1966, To Read
+64,The Golden Notebook,Doris Lessing, 1962, To Read
+65,Midnight's Children,Salman Rushdie, 1981, To Read
+66,Nervous Conditions,Tsitsi Dangarembga, 1988, To Read
+67,The Little Prince,Antoine de Saint-Exupéry, 1943, To Read
+68,The Master and Margarita,Mikhail Bulgakov, 1967, To Read
+69,The Ramayana,attributed to Valmiki, 11th Century BC, To Read
+70,Antigone,Sophocles, c 441 BC, To Read
+71,Dracula,Bram Stoker, 1897, To Read
+72,The Left Hand of Darkness,Ursula K Le Guin, 1969, To Read
+73,A Christmas Carol,Charles Dickens, 1843, To Read
+74,América,Raúl Otero Reiche, 1980, To Read
+75,Before the Law,Franz Kafka, 1915, To Read
+76,Children of Gebelawi,Naguib Mahfouz, 1967, To Read
+77,Il Canzoniere,Petrarch, 1374, To Read
+78,Kebra Nagast,various authors, 1322, To Read
+79,Little Women,Louisa May Alcott, 1868-1869, To Read
+80,Metamorphoses,Ovid, 8 AD, To Read
+81,Omeros,Derek Walcott, 1990, To Read
+82,One Day in the Life of Ivan Denisovich,Aleksandr Solzhenitsyn, 1962, To Read
+83,Orlando,Virginia Woolf, 1928, To Read
+84,Rainbow Serpent,Aboriginal Australian story cycle, date unknown, To Read
+85,Revolutionary Road,Richard Yates, 1961, To Read
+86,Robinson Crusoe,Daniel Defoe, 1719, To Read
+87,Song of Myself,Walt Whitman, 1855, To Read
+88,The Adventures of Huckleberry Finn,Mark Twain, 1884, To Read
+89,The Adventures of Tom Sawyer,Mark Twain, 1876, To Read
+90,The Aleph,Jorge Luis Borges, 1945, To Read
+91,The Eloquent Peasant,ancient Egyptian folk story, circa 2000 BC, To Read
+92,The Emperor's New Clothes,Hans Christian Andersen, 1837, To Read
+93,The Jungle,Upton Sinclair, 1906, To Read
+94,The Khamriyyat,Abu Nuwas, late 8th-early 9th Century, To Read
+95,The Radetzky March,Joseph Roth, 1932, To Read
+96,The Raven,Edgar Allan Poe, 1845, To Read
+97,The Satanic Verses,Salman Rushdie, 1988, To Read
+98,The Secret History,Donna Tartt, 1992, To Read
+99,The Snowy Day,Ezra Jack Keats, 1962, To Read
+100,Toba Tek Singh,Saadat Hasan Manto, 1955, To Read

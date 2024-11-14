@@ -7,25 +7,44 @@
       href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"
     />
     <style>
+      body {
+          font-family: 'Arial', sans-serif;
+          margin: 0;
+          padding: 20px;
+          background-color: #f4f4f9;
+      }
       tr.htmx-swapping td {
         opacity: 0;
         transition: opacity 1s ease-out;
       }
       .main-container {
-        display: flex;
-        flex-direction: row;
-        gap: 20px;
-      }
-      .left-column {
-        flex: 1;
-      }
-      .right-column {
-        flex: 2;
-        display: flex;
-        flex-direction: column;
-      }
+          display: flex;
+          flex-direction: row;
+         
+        }
+        .left-column, .right-column {
+            padding: 1rem;
+            overflow: auto;
+        }
+        .left-column {
+            flex: 1;
+            background-color: #f0f0f0;
+        }
+        .right-column {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            background-color: #e0e0e0;
+        }
+        .divider {
+            width: 5px;
+            background-color: #ccc;
+            cursor: ew-resize;
+            position: relative;
+        }
       .chat-container {
         flex: 1;
+        max-height: 900px;
         overflow-y: auto;
         border: 1px solid #ddd;
         padding: 10px;
@@ -83,6 +102,55 @@
         right: -10px;
         top: 10px;
       }
+      .table-container {
+          max-width: 900px;
+          margin: 0 auto;
+      }
+
+      .styled-table {
+          width: 100%;
+          border-collapse: collapse;
+      }
+
+      .styled-table th, .styled-table td {
+          padding: 12px;
+          text-align: left;
+      }
+
+      .styled-table tr:nth-child(even) {
+          background-color: #f3f3f3;
+      }
+
+      .styled-table th {
+          background-color: hsla(241, 82%, 64%, 0.829);
+          color: white;
+      }
+
+      .styled-table tbody tr {
+          cursor: pointer;
+          transition: background-color 0.3s ease;
+      }
+
+      .styled-table tbody tr:hover {
+          background-color: #d3d3d3;
+      }
+
+      .selected {
+          background-color: #9cf;
+      }
+
+      .details-container {
+          margin-top: 20px;
+          padding: 15px;
+          border: 1px solid #ddd;
+          background-color: white;
+      }
+      .divider {
+            width: 5px;
+            background-color: #ccc;
+            cursor: ew-resize;
+            position: relative;
+        }
     </style>
     <title>AI.Library</title>
   </head>
@@ -92,73 +160,74 @@
       <div class="main-container">
         <!-- Left Column -->
         <div class="left-column">
-          <form
-            hx-put="/api/books"
-            hx-ext="bookjson"
-            hx-target="this"
-            hx-swap="outerHTML"
-          >
-            <div class="form-group">
-              <label>Book Name</label>
-              <input id="name" type="text" name="Name" value="Kalam" />
-            </div>
-            <div class="form-group">
-              <label>Author</label>
-              <input id="author" type="text" name="Author" value="M.T Vasudevan Nair" />
-            </div>
-            <div class="form-group">
-              <label>Description</label>
-              <input id="description" type="text" name="Description" value="A story, Once upon a time" />
-            </div>
-            <div class="form-group">
-              <label>Library</label>
-              <input id="library" type="text" name="Library" value="Kalista" />
-            </div>
-            <button class="btn" hx-post="/api/books" hx-target="#books" hx-swap="afterbegin">
-              Insert
-            </button>
-            <button class="btn" hx-get="/api/books" hx-target="#bookresponse" hx-swap="innerHTML">
-              Refresh Books
-            </button>
-          </form>
-          <div id="bookresponse" hx-get="/api/books" hx-trigger="load" hx-swap="beforeend">
-            My Books
+          <div id="bookresponse" class="table-container">
+            <h3> 
+              Search Books 
+              <span class="htmx-indicator"> 
+                <img src="/img/bars.svg"/> Searching... 
+               </span> 
+            </h3>
+            <input class="form-control" type="search"
+                   name="search" placeholder="Begin Typing To Search Users..." 
+                   hx-post="/api/books/search" 
+                   hx-ext="bookjson" 
+                   hx-trigger="input changed delay:500ms, search" 
+                   hx-target="#search-books" 
+                   hx-indicator=".htmx-indicator">
+            <table id='books' hx-get="/api/books/1" hx-trigger="load" class='styled-table' hx-target="#search-books" hx-swap="beforeend">
+              <thead>
+                <tr>
+                  <th>bookId</th>
+                  <th>name</th>
+                  <th>author</th>
+                  <th>description</th>
+                  <th>library</th>
+                  <th>Action</th>
+                  <th>Delete</th>
+                </tr>
+              </thead>
+              <tbody id="search-books" hx-confirm='Are you sure?' hx-target='closest tr' hx-swap='outerHTML swap:1s'>
+                <tr>
+                  <td><input type='text' name='bookId' id='bookId' disabled></td>
+                  <td><input type='text' name='name' id='name' required></td>
+                  <td><input type='text' name='author' id='author' required></td>
+                  <td><input type='text' name='description' id='description' required></td>
+                  <td><input type='text' name='library' id='library' required></td>
+                  <td><button type='submit' class='btn' hx-post='/api/books' hx-target='#books' hx-ext='bookjson' hx-include='#bookId, #name, #author, #description, #library' hx-swap='beforeend'>Add</button></td>
+                </tr>
+              </tbody>
+            </table>
           </div>
+          <form hx-encoding='multipart/form-data' hx-post='/api/upload'
+                _='on htmx:xhr:progress(loaded, total) set #progress.value to (loaded/total)*100'>
+              <input type='file' name='file'>
+              <button>
+                  Upload
+              </button>
+              <progress id='progress' value='0' max='100'></progress>
+          </form>
         </div>
+        <div class="divider" id="divider"></div>
         <!-- Right Column -->
         <div class="right-column">
-          <div id="chatview" class="chat-container">
-            <div id="chat-message-0" class="chat-message assistant">
-              <div class="bubble">
-                <p>You are a helpful and concise assistant.</p>
-              </div>
-            </div>
-            <div id="chat-message-1" class="chat-message user">
-              <img
-                src="https://gramener.com/comicgen/v1/comic?name=dee&amp;angle=side&amp;emotion=happy&amp;pose=explaining&amp;box=&amp;boxcolor=%23000000&amp;boxgap=&amp;mirror="
-              />
-              <div class="bubble">
-                <p>what is the capital of newzland?</p>
-              </div>
-            </div>
-            <div id="chat-message-2" class="chat-message assistant">
-              <img
-                src="https://gramener.com/comicgen/v1/comic?name=ava&amp;emotion=angry&amp;pose=angry&amp;shirt=%23b1dbf2&amp;box=&amp;boxcolor=%23000000&amp;boxgap=&amp;mirror="
-              />
-              <div class="bubble">
-                <p>
-                  I think you meant to ask about New Zealand! The capital of New
-                  Zealand is Wellington.
-                </p>
-              </div>
-            </div>
+          <div id="details" class="details-container" hx-get="/api/chat/"  hx-target="#chatview" hx-trigger="htmx:afterSettle from:#details">
+            <!-- Book details will be loaded here via htmx -->
           </div>
-          <form hx-post="/api/ai/" hx-ext="bookjson" hx-include="#msg-input" hx-target="#chatview" hx-swap="beforeend">
+          <div  id="chatview" class="chat-container">
+
+          </div>
+          <form 
+          hx-post="/api/chat/" 
+          hx-ext="bookjson" 
+          hx-include="#msg-input" 
+          hx-target="#chatview" 
+          hx-swap="innerHTML"
+          hx-on::after-request="this.reset()">
             <fieldset role="group" class="input-group">
               <input
                 required="1"
                 type="text"
-                name="message"
+                name="content"
                 placeholder="Type a message"
                 hx-swap-oob="true"
                 aria-label="Type your message here"
@@ -169,6 +238,7 @@
               <button class="btn">Send</button>
             </fieldset>
           </form>
+          <button id="downloadBtn">Download Chat History PDF</button>
         </div>
       </div>
     </main>
@@ -179,6 +249,32 @@
       crossorigin="anonymous"
     ></script>
     <script>
+              const divider = document.getElementById('divider');
+        const leftColumn = document.querySelector('.left-column');
+        const rightColumn = document.querySelector('.right-column');
+
+        let isDragging = false;
+
+        divider.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            document.body.style.cursor = 'ew-resize';
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+
+            const containerWidth = divider.parentElement.offsetWidth;
+            const leftWidth = e.clientX / containerWidth * 100;
+            const rightWidth = 100 - leftWidth;
+
+            leftColumn.style.flex = `0 0 ${leftWidth}%`;
+            rightColumn.style.flex = `0 0 ${rightWidth}%`;
+        });
+
+        document.addEventListener('mouseup', () => {
+            isDragging = false;
+            document.body.style.cursor = 'default';
+        });
       htmx.defineExtension('bookjson', {
         onEvent: function (name, evt) {
           if (name === "htmx:configRequest") {
@@ -193,6 +289,106 @@
           return payload;
         },
       });
+      // document.addEventListener('DOMContentLoaded', function() {
+      //     const table = document.getElementById('books');
+      //     const rows = table.getElementsByTagName('tr');
+
+      //     Array.from(rows).forEach(row => {
+      //         row.addEventListener('click', function() {
+      //             clearSelections();
+      //             row.classList.add('selected');
+      //         });
+      //     });
+
+      //     function clearSelections() {
+      //         Array.from(rows).forEach(row => {
+      //             row.classList.remove('selected');
+      //         });
+      //     }
+      // });
+      function importChat() {
+                const chatView = document.getElementById('chatview');
+                const messages = Array.from(chatView.children).map(message => ({
+                role: { label: message.classList.contains('user') ? 'user' : 'assistant' },
+                items: [{
+                  $type: 'TextContent',
+                  text: message.querySelector('.bubble').innerText
+                }]
+                }));
+                localStorage.setItem('chatMessages', JSON.stringify(messages));
+                alert('Chat imported to local storage.');
+            }
+
+            function exportChat() {
+            const chatMessages = localStorage.getItem('chatMessages');
+            if (chatMessages) {
+              fetch('/api/exportChat', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: chatMessages
+              })
+              .then(response => {
+                if (response.ok) {
+                  return response.json();  // Ensure the server returns JSON
+                } else {
+                  throw new Error('Failed to export chat.');
+                }
+              })
+              .then(data => {
+                alert('Chat exported successfully.');
+              })
+              .catch(error => {
+                console.error('Error exporting chat:', error);
+              });
+            } else {
+              alert('No chat messages found in local storage.');
+            }
+          }
+            async function downloadPdf(){
+              const chatView = document.getElementById('chatview');
+                const chatHistory = Array.from(chatView.children).map(message => ({
+                role: { label: message.classList.contains('user') ? 'user' : 'assistant' },
+                items: [{
+                  $type: 'TextContent',
+                  text: message.querySelector('.bubble').innerText
+                }]
+                }));
+
+                try {
+                const response = await fetch('/api/downloadpdf', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(chatHistory)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const blob = await response.blob();  // Convert response to blob
+
+                // Create a download link and click it programmatically to download the file
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'ChatHistory.pdf';  // Set the filename
+                document.body.appendChild(a);
+                a.click();  // Programmatically click the link
+                document.body.removeChild(a);  // Clean up the DOM
+                window.URL.revokeObjectURL(url);  // Release the object URL
+
+            } catch (error) {
+                console.error('Error downloading PDF:', error);
+            }
+        }
+
+        document.getElementById('downloadBtn').addEventListener('click', downloadPdf);
+        
+        
     </script>
   </body>
 </html>

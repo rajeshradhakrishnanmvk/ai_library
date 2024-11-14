@@ -400,7 +400,8 @@ FodyWeavers.xsd
 
 # Olive folders
 cache
-models
+# models
 
 *.db
 Migrations
+*.env

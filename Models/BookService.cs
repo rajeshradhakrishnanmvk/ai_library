@@ -2,10 +2,60 @@ namespace BooksApi.Models;
 
 [EnableCors("Policy")]
 public class BookService
-{
+{    
+    // Constants for pagination
+    private const int PageSize = 2; // Number of items per page
+
+    // Cursor-based pagination method
+    public static async Task<IResult> CursorPagination(int cursor, LibraryDbContext db)
+    {
+
+        // Query to select the necessary book details
+        var query = db.Books
+            .Select(b => new Book
+            {
+                BookId = b.BookId,
+                Name = b.Name,
+                Author = b.Author,
+                Description = b.Description,
+                Library = b.Library
+            });
+
+        // Get the paged results based on the cursor and page size
+        var pagedBooks = await query
+            .Where(b => b.BookId > cursor)
+            .Take(PageSize)
+            .ToListAsync();
+
+        // Get the next cursor if there are books
+        var nextCursor = pagedBooks.Count > 0 ? pagedBooks[^1].BookId : (int?)null;
+
+        // Return the paged data and the next cursor for pagination
+        return TypedResults.Ok(new { pagedBooks, nextCursor });
+    }
     public static async Task<IResult> GetAllBooks(LibraryDbContext db)
     {
         return TypedResults.Ok(await db.Books.ToListAsync());
+    }
+
+    public static async Task<IResult> GeBooksByName(string Name, LibraryDbContext db)
+    {
+        int nextCursor = 0;
+        // Check if Name is empty or null
+        if (string.IsNullOrWhiteSpace(Name))
+        {
+            // Return all books
+            var allBooks = await db.Books.ToListAsync();
+            
+            return TypedResults.Ok(new { pagedBooks = allBooks, nextCursor });
+        }
+        
+        var pagedBooks = await db.Books
+                                .Where(b => b.Name!.ToLower().StartsWith(Name.ToLower()))
+                                .ToListAsync();
+
+        
+        return TypedResults.Ok(new { pagedBooks, nextCursor });
     }
 
     public static async Task<IResult> GeBooksByLibrary(string Library, LibraryDbContext db)
@@ -39,7 +89,7 @@ public class BookService
 
         await db.SaveChangesAsync();
 
-        return TypedResults.NoContent();
+        return TypedResults.Ok(Book);
     }
 
     public static async Task<IResult> DeleteBook(int id, LibraryDbContext db)
@@ -48,7 +98,7 @@ public class BookService
         {
             db.Books.Remove(Book);
             await db.SaveChangesAsync();
-            return TypedResults.Ok(Book);
+            return TypedResults.Ok();
         }
 
         return TypedResults.NotFound();
